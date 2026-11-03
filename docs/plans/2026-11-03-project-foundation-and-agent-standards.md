@@ -111,8 +111,11 @@ Write `AGENTS.md` containing:
    - Offline container: 100% offline at inference, no external APIs.
    - Deterministic execution: Fixed random seeds, temperature = 0 / greedy decoding.
 3. **Directory Map & Scopes**: Table of where each file type lives (`src/core`, `src/asr`, `src/agent`, `src/env`, `src/eval`, `configs/`, `scripts/`, `experiments/`, `tests/`, `docs/`).
-4. **File Naming & Root Guard Rules**: `snake_case` for code, action verbs for `scripts/`, `exp_YYYYMMDD_<name>/` for `experiments/`, zero temporary files at root.
-5. **Development Workflow**: Single-responsibility units, unit testing before completion, local evaluation metric verification.
+4. **Remote GPU Execution via Colab CLI (`colab`)**:
+   - Guidance for AI agents on leveraging Google Colab via the `colab` CLI for GPU-intensive inference, ASR processing, and evaluation when local compute is insufficient.
+   - Core operations: session provisioning (`colab new --gpu`), code sync (`colab upload`), execution (`colab exec` / `colab run`), results fetching (`colab download`), and lifecycle management (`colab stop`).
+5. **File Naming & Root Guard Rules**: `snake_case` for code, action verbs for `scripts/`, `exp_YYYYMMDD_<name>/` for `experiments/`, zero temporary files at root.
+6. **Development Workflow**: Single-responsibility units, unit testing before completion, local evaluation metric verification.
 
 - [ ] **Step 2: Verify `AGENTS.md` content and formatting**
 

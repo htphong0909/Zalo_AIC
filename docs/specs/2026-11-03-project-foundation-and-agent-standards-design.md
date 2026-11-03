@@ -72,7 +72,8 @@ The root `AGENTS.md` must be read by all AI agents upon session initialization. 
    - **Execution Environment:** Fully offline Docker container without external network access at inference time.
    - **Reproducibility:** Fixed random seeds across all libraries; deterministic decoding (`temperature = 0` / greedy decoding).
 3. **Directory Map & Scopes:** Clear guide indicating where code, configs, and experiments must be placed.
-4. **Development Workflow:**
+4. **Remote GPU Execution via Colab CLI (`colab`):** Guidelines for provisioning GPU instances, running remote inference/benchmarking scripts, uploading code, and fetching outputs using the installed `colab` CLI.
+5. **Development Workflow:**
    - Write modular code with single responsibility.
    - Verify every new component with unit tests in `tests/`.
    - Never commit large weights or dirty temporary logs to git.
