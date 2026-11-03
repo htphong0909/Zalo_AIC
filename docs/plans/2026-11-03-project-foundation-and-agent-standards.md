@@ -114,8 +114,11 @@ Write `AGENTS.md` containing:
 4. **Remote GPU Execution via Colab CLI (`colab`)**:
    - Guidance for AI agents on leveraging Google Colab via the `colab` CLI for GPU-intensive inference, ASR processing, and evaluation when local compute is insufficient.
    - Core operations: session provisioning (`colab new --gpu`), code sync (`colab upload`), execution (`colab exec` / `colab run`), results fetching (`colab download`), and lifecycle management (`colab stop`).
-5. **File Naming & Root Guard Rules**: `snake_case` for code, action verbs for `scripts/`, `exp_YYYYMMDD_<name>/` for `experiments/`, zero temporary files at root.
-6. **Development Workflow**: Single-responsibility units, unit testing before completion, local evaluation metric verification.
+5. **Model Weights & Data Management via Hugging Face Hub (NO Google Drive)**:
+   - Mandatory rule: No datasets or weights stored on Google Drive. All checkpoints, models, and audio splits are stored on Hugging Face Hub.
+   - Agents automate upload/download of models and datasets using `hf` CLI (`hf download`, `hf upload`) and `huggingface_hub` Python package.
+6. **File Naming & Root Guard Rules**: `snake_case` for code, action verbs for `scripts/`, `exp_YYYYMMDD_<name>/` for `experiments/`, zero temporary files at root.
+7. **Development Workflow**: Single-responsibility units, unit testing before completion, local evaluation metric verification.
 
 - [ ] **Step 2: Verify `AGENTS.md` content and formatting**
 

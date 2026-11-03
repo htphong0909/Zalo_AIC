@@ -75,19 +75,58 @@ Local developer machines may lack 24GB VRAM GPUs for evaluating 3B LLMs or fine-
    - Check existing sessions: `colab sessions`
    - Create a new GPU session: `colab new --gpu`
    - Check session status: `colab status`
-2. **Code & Data Syncing:**
+2. **Code & Environment Setup:**
    - Upload code or lightweight configs: `colab upload <local_file_or_dir> <remote_path>`
-   - Mount Google Drive if dataset is stored there: `colab drivemount /content/drive`
-3. **Remote Execution:**
+   - Install packages: `colab install <package_name>` or `colab exec "pip install -r requirements.txt huggingface_hub"`
+3. **Data & Model Weight Retrieval from Hugging Face:**
+   - Download datasets and model checkpoints directly from Hugging Face into the Colab VM:
+     `colab exec "hf download <hf_repo_id> --local-dir /content/models/<model_name>"`
+   - *(Note: Do NOT mount or store anything to Google Drive).*
+4. **Remote Execution:**
    - Execute single commands or scripts: `colab exec "python scripts/run_eval.py --config configs/base.yaml"`
-   - Install required packages: `colab install <package_name>` or `colab exec "pip install -r requirements.txt"`
-4. **Result Retrieval & Cleanup:**
-   - Download evaluation outputs: `colab download <remote_results_path> experiments/exp_YYYYMMDD_<name>/`
+5. **Checkpoint Upload & Cleanup:**
+   - Upload fine-tuned model checkpoints or logs directly from Colab to Hugging Face:
+     `colab exec "hf upload <hf_repo_id> /content/experiments/<exp_name>/checkpoint <path_in_repo>"`
+   - Download summary metrics locally: `colab download <remote_results_path> experiments/exp_YYYYMMDD_<name>/`
    - Terminate session when finished: `colab stop <session_id>`
 
 ---
 
-## 5. File Naming Conventions & Root Hygiene
+## 5. Model Weights & Data Management via Hugging Face Hub (NO GOOGLE DRIVE)
+
+All external artifacts (model weights, fine-tuned checkpoints, audio datasets, synthetic data) are strictly managed via **Hugging Face Hub**. **Google Drive must NOT be used.**
+
+### Core Directives for Agents:
+1. **Agent Responsibility:**
+   - The AI agent is responsible for automating file management on Hugging Face: pushing checkpoints, pulling required weights, verifying hashes, and organizing repository paths.
+2. **Authentication:**
+   - Authenticate using stored tokens (`hf auth login` / `HF_TOKEN` environment variable).
+   - Check authenticated accounts with `hf auth whoami` or `hf auth list`.
+3. **CLI Usage (`hf`):**
+   - Download model/data: `hf download <repo_id> [filename] --local-dir <local_dir>`
+   - Upload checkpoint/data: `hf upload <repo_id> <local_path> [path_in_repo] [--repo-type model|dataset]`
+   - Copy files: `hf cp <src> <dest>`
+4. **Python API Usage (`huggingface_hub`):**
+   ```python
+   from huggingface_hub import HfApi, hf_hub_download, snapshot_download
+
+   # Download weights or data
+   local_dir = snapshot_download(repo_id="username/model_or_dataset", local_dir="models/checkpoint")
+
+   # Upload artifact or checkpoint
+   api = HfApi()
+   api.upload_folder(
+       folder_path="experiments/exp_YYYYMMDD_name/checkpoints",
+       repo_id="username/model_name",
+       repo_type="model",
+   )
+   ```
+5. **Local Git Hygiene:**
+   - Model weights (`*.safetensors`, `*.bin`, `*.pt`, `*.pth`) are strictly excluded from git. Always store and pull them from Hugging Face.
+
+---
+
+## 6. File Naming Conventions & Root Hygiene
 
 1. **Python Source Files (`src/`, `tests/`):**
    - Use `snake_case` reflecting single responsibility (e.g., `tool_validator.py`, `whisper_engine.py`, `eval_metrics.py`).
@@ -103,7 +142,7 @@ Local developer machines may lack 24GB VRAM GPUs for evaluating 3B LLMs or fine-
 
 ---
 
-## 6. Development Workflow & Quality Gates
+## 7. Development Workflow & Quality Gates
 
 - **Decompose before implementing:** Keep units small and focused.
 - **Test-Driven / Verification first:** Write unit tests in `tests/` for every parser, wrapper, or metric function.

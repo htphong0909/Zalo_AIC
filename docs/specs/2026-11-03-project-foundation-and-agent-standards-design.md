@@ -73,7 +73,8 @@ The root `AGENTS.md` must be read by all AI agents upon session initialization. 
    - **Reproducibility:** Fixed random seeds across all libraries; deterministic decoding (`temperature = 0` / greedy decoding).
 3. **Directory Map & Scopes:** Clear guide indicating where code, configs, and experiments must be placed.
 4. **Remote GPU Execution via Colab CLI (`colab`):** Guidelines for provisioning GPU instances, running remote inference/benchmarking scripts, uploading code, and fetching outputs using the installed `colab` CLI.
-5. **Development Workflow:**
+5. **Storage & Artifact Policy (Hugging Face Hub, NO Google Drive):** All model weights, fine-tuned checkpoints, and datasets are stored and managed on Hugging Face Hub using `hf` CLI and `huggingface_hub`. Google Drive is strictly not used. Agents are responsible for automating file upload and download to/from Hugging Face.
+6. **Development Workflow:**
    - Write modular code with single responsibility.
    - Verify every new component with unit tests in `tests/`.
    - Never commit large weights or dirty temporary logs to git.

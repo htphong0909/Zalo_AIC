@@ -74,15 +74,31 @@ colab sessions
 colab upload configs/ /content/configs/
 colab upload src/ /content/src/
 
-# 4. Run remote inference or evaluation
+# 4. Pull model weights or dataset from Hugging Face (No Google Drive)
+colab exec "hf download <hf_repo_id> --local-dir /content/models/<model_name>"
+
+# 5. Run remote inference or evaluation
 colab exec "python scripts/run_eval.py --config configs/base.yaml"
 
-# 5. Fetch experiment results locally
+# 6. Push trained checkpoints to Hugging Face Hub
+colab exec "hf upload <hf_repo_id> /content/experiments/<exp_name>/checkpoint"
+
+# 7. Fetch experiment summary metrics locally
 colab download /content/experiments/ experiments/
 
-# 6. Release resources when finished
+# 8. Release resources when finished
 colab stop <session_id>
 ```
+
+---
+
+## 🤗 Model Weights & Data Management (Hugging Face Hub)
+
+All heavy binary artifacts (ASR models, LLM checkpoints, datasets) are versioned and stored on **Hugging Face Hub**. **Google Drive is not used.**
+
+- **Download:** `hf download <repo_id> --local-dir <local_dir>`
+- **Upload:** `hf upload <repo_id> <local_dir> [path_in_repo] --repo-type [model|dataset]`
+- **Python Integration:** Automated via `huggingface_hub` (`snapshot_download`, `upload_folder`).
 
 ---
 
