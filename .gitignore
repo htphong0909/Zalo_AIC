@@ -16,6 +16,7 @@ runs/
 
 # Cache & artifacts
 .cache/
+.pytest_cache/
 
 # Python
 __pycache__/

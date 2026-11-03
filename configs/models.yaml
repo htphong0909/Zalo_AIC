@@ -1,0 +1,15 @@
+asr:
+  repo_id: Qwen/Qwen3-ASR-0.6B-hf
+  exclude_prefixes: []
+llm:
+  repo_id: Qwen/Qwen3.5-4B
+  exclude_prefixes:
+    - model.visual.
+    - mtp.
+reference_asr:
+  repo_id: Qwen/Qwen3-ASR-1.7B-hf
+  exclude_prefixes: []
+limits:
+  llm_max_params: 5000000000
+  total_max_params: 6000000000
+  llm_max_context: 16384
