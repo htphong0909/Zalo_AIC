@@ -40,12 +40,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pigz
-          pip install --no-cache-dir huggingface_hub
+          pip install --no-cache-dir huggingface_hub safetensors
 
       - name: Download Fine-Tuned Offline Models (Public HF Repo)
         run: |
           cd submission/qwen35_4b_sft_v2_e2e
-          python3 prepare_models.py --saved-dir saved_models
+          python3 prepare_models.py --saved-dir saved_models --skip-offline-load
           echo "=== Downloaded models ==="
           ls -lh saved_models/
           du -sh saved_models/*
