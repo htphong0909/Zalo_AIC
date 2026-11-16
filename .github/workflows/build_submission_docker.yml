@@ -20,14 +20,18 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Clean Runner Disk Space (~60 GB free SSD)
+      - name: Clean Runner Disk Space (~70 GB free SSD)
         run: |
           echo "=== Disk space before cleanup ==="
           df -h
+          sudo swapoff -a || true
+          sudo rm -f /swapfile || true
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/share/swift
+          docker system prune -af --volumes || true
           echo "=== Disk space after cleanup ==="
           df -h
 
@@ -53,9 +57,17 @@ jobs:
       - name: Build Docker Image zac2026:67cat
         run: |
           cd submission/qwen35_4b_sft_v2_e2e
-          docker build --network=host -t zac2026:67cat .
+          docker build --progress=plain --network=host -t zac2026:67cat . 2>&1 | tee /tmp/docker_build.log
           echo "=== Docker Images ==="
           docker images
+
+      - name: Dump Build Failure Diagnostics
+        if: failure()
+        run: |
+          echo "=== Disk space on failure ==="
+          df -h
+          echo "=== Last 150 lines of Docker build log ==="
+          tail -n 150 /tmp/docker_build.log || true
 
       - name: Free Temporary Host Model Cache Before Compression
         run: |
