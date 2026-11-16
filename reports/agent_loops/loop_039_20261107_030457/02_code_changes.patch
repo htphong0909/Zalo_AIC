@@ -1,0 +1,88 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index acb1bbb..4a9cbc5 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,13 +1,13 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 32,
+-  "best_dev_wer": 1.51,
+-  "best_dev_cer": 1.07,
+-  "best_dev_em": 87.63,
+-  "best_train_wer": 0.99,
+-  "best_train_em": 92.0,
+-  "total_loops": 39,
+-  "accepted_loops": 10,
++  "current_best_loop": 38,
++  "best_dev_wer": 1.5,
++  "best_dev_cer": 1.03,
++  "best_dev_em": 86.96,
++  "best_train_wer": 0.82,
++  "best_train_em": 92.67,
++  "total_loops": 40,
++  "accepted_loops": 11,
+   "rejected_loops": 29,
+   "history": [
+     {
+@@ -945,6 +945,30 @@
+         "delta_dev_em": -0.3399999999999892,
+         "delta_train_wer": 0.010000000000000009
+       }
++    },
++    {
++      "loop": 38,
++      "hypothesis": "Calibrated 20ms pre-roll acoustic padding aligns convolutional front-end downsampling to eliminate VOT onset corruption",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.01%) or EM improved (-0.67%) without train collapse",
++      "train": {
++        "wer": 0.82,
++        "cer": 0.63,
++        "sentence_em": 92.67,
++        "latency": 0.3724
++      },
++      "dev": {
++        "wer": 1.5,
++        "cer": 1.03,
++        "sentence_em": 86.96,
++        "latency": 0.3604
++      },
++      "deltas": {
++        "delta_dev_wer": -0.010000000000000009,
++        "delta_dev_cer": -0.040000000000000036,
++        "delta_dev_em": -0.6700000000000017,
++        "delta_train_wer": -0.17000000000000004
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/itn.py b/src/asr/itn.py
+index 1fae3c1..56f5a20 100644
+--- a/src/asr/itn.py
++++ b/src/asr/itn.py
+@@ -223,6 +223,13 @@ for _mod, _trad in _TONE_HARMONIZATION_MAP.items():
+ # In standard written Vietnamese, 'gút' is strictly an orthographic error in these contexts.
+ _RE_DIALECT_RUT = re.compile(r"\bgút\s+(tiết\s+kiệm|tiền)\b", re.IGNORECASE)
+ 
++# In Southern Vietnamese spoken speech, colloquial negation 'hông' is frequently realized before
++# high-frequency modal and action predicates ('hông đủ', 'hông có', 'hông được', etc.).
++_RE_COLLOQUIAL_NEGATION = re.compile(
++    r"\bhông\s+(đủ|có|được|phải|cần|muốn|thấy|biết|dời|mưa|đi|làm|bật|tắt|kịp|dám|nên)\b",
++    re.IGNORECASE,
++)
++
+ 
+ def inverse_text_normalize(text: str) -> str:
+     """Apply Vietnamese Inverse Text Normalization (ITN) and orthographic standardization.
+@@ -289,4 +296,11 @@ def inverse_text_normalize(text: str) -> str:
+     # 6. Dialectal phonological compound recovery
+     s = _RE_DIALECT_RUT.sub(r"rút \1", s)
+ 
++    # 7. Colloquial dialectal negation recovery
++    def _sub_neg(m: re.Match) -> str:
++        lead = "Không" if m.group(0)[0].isupper() else "không"
++        return f"{lead} {m.group(1)}"
++
++    s = _RE_COLLOQUIAL_NEGATION.sub(_sub_neg, s)
++
+     return s

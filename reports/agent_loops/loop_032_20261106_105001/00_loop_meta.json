@@ -1,0 +1,8 @@
+{
+  "loop": 32,
+  "hypothesis": "Symmetric 170ms VAD collar (+1 encoder frame buffer at -35dB clean SNR) captures speech onset VOT and trailing vowel release",
+  "start_time": "2026-11-06T10:50:01.658817",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "loop-researcher"
+}

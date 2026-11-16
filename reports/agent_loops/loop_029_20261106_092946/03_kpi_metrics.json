@@ -1,0 +1,24 @@
+{
+  "loop": 29,
+  "hypothesis": "Integer 4-frame acoustic collar padding (symmetric 80ms = 8 STFT hops = 4 encoder frames) fully spans Whisper's 65ms Conv1D receptive field",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.04%, delta EM=+0.34%) or Train regressed",
+  "train": {
+    "wer": 1.09,
+    "cer": 0.93,
+    "sentence_em": 92.0,
+    "latency": 0.3648
+  },
+  "dev": {
+    "wer": 1.56,
+    "cer": 1.09,
+    "sentence_em": 87.63,
+    "latency": 0.3514
+  },
+  "deltas": {
+    "delta_dev_wer": 0.040000000000000036,
+    "delta_dev_cer": 0.010000000000000009,
+    "delta_dev_em": 0.3399999999999892,
+    "delta_train_wer": 0.10000000000000009
+  }
+}

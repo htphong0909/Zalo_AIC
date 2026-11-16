@@ -1,0 +1,8 @@
+{
+  "loop": 36,
+  "hypothesis": "Audio-Tower-Only LoRA adaptation (CLAnSR ICASSP 2025) restricting PEFT to acoustic encoder projections with 100% frozen decoder on 1,246 Train samples",
+  "start_time": "2026-11-07T01:17:53.782375",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "loop-researcher"
+}

@@ -1,0 +1,96 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 5176c87..338213c 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,13 +1,13 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 12,
+-  "best_dev_wer": 1.57,
+-  "best_dev_cer": 1.09,
+-  "best_dev_em": 87.29,
+-  "best_train_wer": 0.99,
++  "current_best_loop": 14,
++  "best_dev_wer": 1.56,
++  "best_dev_cer": 1.05,
++  "best_dev_em": 86.96,
++  "best_train_wer": 1.02,
+   "best_train_em": 92.0,
+-  "total_loops": 14,
+-  "accepted_loops": 6,
++  "total_loops": 15,
++  "accepted_loops": 7,
+   "rejected_loops": 8,
+   "history": [
+     {
+@@ -345,6 +345,30 @@
+         "delta_dev_em": -0.6700000000000017,
+         "delta_train_wer": 0.22999999999999998
+       }
++    },
++    {
++      "loop": 14,
++      "hypothesis": "Autoregressive repetition penalty decoding (1.05) combined with conservative acoustic boundary silence trimming (-35 dB, 120ms collar margin) eliminates phrase echo loops and room-noise onset hallucinations while maintaining the golden Loop #12 prompt.",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.01%) or EM improved (-0.33%) without train collapse",
++      "train": {
++        "wer": 1.02,
++        "cer": 0.91,
++        "sentence_em": 92.0,
++        "latency": 0.36
++      },
++      "dev": {
++        "wer": 1.56,
++        "cer": 1.05,
++        "sentence_em": 86.96,
++        "latency": 0.3381
++      },
++      "deltas": {
++        "delta_dev_wer": -0.010000000000000009,
++        "delta_dev_cer": -0.040000000000000036,
++        "delta_dev_em": -0.3300000000000125,
++        "delta_train_wer": 0.030000000000000027
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 6e1f6c8..27f2f5d 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -54,9 +54,9 @@ class WhisperASREngine:
+         post_roll_pad_ms: float = 40.0,
+         peak_normalize: bool = True,
+         trim_silence: bool = True,
+-        vad_db_threshold: float = -35.0,
+-        vad_margin_ms: float = 120.0,
+-        repetition_penalty: float = 1.05,
++        vad_db_threshold: float = -28.0,
++        vad_margin_ms: float = 150.0,
++        repetition_penalty: float = 1.10,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -136,8 +136,8 @@ class WhisperASREngine:
+         sr: int = 16000,
+         frame_ms: float = 25.0,
+         hop_ms: float = 10.0,
+-        db_threshold: float = -35.0,
+-        margin_ms: float = 120.0,
++        db_threshold: float = -28.0,
++        margin_ms: float = 150.0,
+     ) -> np.ndarray:
+         """Conservative energy-based boundary silence trimming with safety collar.
+ 
+@@ -182,8 +182,8 @@ class WhisperASREngine:
+             waveform = self._trim_waveform_silence(
+                 waveform,
+                 sr=sr,
+-                db_threshold=getattr(self, "vad_db_threshold", -35.0),
+-                margin_ms=getattr(self, "vad_margin_ms", 120.0),
++                db_threshold=getattr(self, "vad_db_threshold", -28.0),
++                margin_ms=getattr(self, "vad_margin_ms", 150.0),
+             )
+ 
+         # 2. Peak amplitude normalization to 0.95 to optimize Mel filterbank dynamic headroom

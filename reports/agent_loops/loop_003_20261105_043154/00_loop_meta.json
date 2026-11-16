@@ -1,0 +1,8 @@
+{
+  "loop": 3,
+  "hypothesis": "Zalo-specialized PhoWhisper Large (1.54B) with Vietnamese ITN and domain prompt conditioning",
+  "start_time": "2026-11-05T04:31:54.466891",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "loop-researcher"
+}

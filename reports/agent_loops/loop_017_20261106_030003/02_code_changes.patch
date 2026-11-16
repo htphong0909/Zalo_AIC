@@ -1,0 +1,166 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 5176c87..0c3268c 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 12,
+-  "best_dev_wer": 1.57,
+-  "best_dev_cer": 1.09,
+-  "best_dev_em": 87.29,
+-  "best_train_wer": 0.99,
++  "current_best_loop": 14,
++  "best_dev_wer": 1.56,
++  "best_dev_cer": 1.05,
++  "best_dev_em": 86.96,
++  "best_train_wer": 1.02,
+   "best_train_em": 92.0,
+-  "total_loops": 14,
+-  "accepted_loops": 6,
+-  "rejected_loops": 8,
++  "total_loops": 17,
++  "accepted_loops": 7,
++  "rejected_loops": 10,
+   "history": [
+     {
+       "loop": 0,
+@@ -345,6 +345,78 @@
+         "delta_dev_em": -0.6700000000000017,
+         "delta_train_wer": 0.22999999999999998
+       }
++    },
++    {
++      "loop": 14,
++      "hypothesis": "Autoregressive repetition penalty decoding (1.05) combined with conservative acoustic boundary silence trimming (-35 dB, 120ms collar margin) eliminates phrase echo loops and room-noise onset hallucinations while maintaining the golden Loop #12 prompt.",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.01%) or EM improved (-0.33%) without train collapse",
++      "train": {
++        "wer": 1.02,
++        "cer": 0.91,
++        "sentence_em": 92.0,
++        "latency": 0.36
++      },
++      "dev": {
++        "wer": 1.56,
++        "cer": 1.05,
++        "sentence_em": 86.96,
++        "latency": 0.3381
++      },
++      "deltas": {
++        "delta_dev_wer": -0.010000000000000009,
++        "delta_dev_cer": -0.040000000000000036,
++        "delta_dev_em": -0.3300000000000125,
++        "delta_train_wer": 0.030000000000000027
++      }
++    },
++    {
++      "loop": 15,
++      "hypothesis": "Dynamic boundary silence trimming (-28.0 dB with 150ms safety collar) combined with calibrated autoregressive repetition penalty (1.10) suppresses background microphone hum hallucinations and breaks entity KV-cache attention latching.",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=-0.67%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.87,
++        "sentence_em": 92.0,
++        "latency": 0.3503
++      },
++      "dev": {
++        "wer": 1.56,
++        "cer": 1.04,
++        "sentence_em": 86.29,
++        "latency": 0.3356
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": -0.010000000000000009,
++        "delta_dev_em": -0.6699999999999875,
++        "delta_train_wer": -0.030000000000000027
++      }
++    },
++    {
++      "loop": 16,
++      "hypothesis": "Domain-conditioned Vietnamese ITN and orthographic harmonization engine resolving colloquial contracted compound numerals (hai lăm, bốn lăm), expanded clock kém and financial ranges, modern nucleus tone harmonization (khoá, toà), and canonical acronym casing.",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.15%, delta EM=-2.01%) or Train regressed",
++      "train": {
++        "wer": 1.04,
++        "cer": 0.92,
++        "sentence_em": 91.33,
++        "latency": 0.3705
++      },
++      "dev": {
++        "wer": 1.71,
++        "cer": 1.16,
++        "sentence_em": 84.95,
++        "latency": 0.3478
++      },
++      "deltas": {
++        "delta_dev_wer": 0.1499999999999999,
++        "delta_dev_cer": 0.10999999999999988,
++        "delta_dev_em": -2.009999999999991,
++        "delta_train_wer": 0.020000000000000018
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 6e1f6c8..68b191a 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -23,6 +23,10 @@ def _sanitize_hyp(raw_text: str, enable_itn: bool = True) -> str:
+     clean_text = strip_asr_tags(raw_text)
+     clean_text = unicodedata.normalize("NFC", clean_text).strip()
+ 
++    # Normalize whitespace before punctuation and collapse consecutive spaces
++    clean_text = re.sub(r"\s+([,.:?!])", r"\1", clean_text)
++    clean_text = re.sub(r"\s+", " ", clean_text).strip()
++
+     # Capitalize leading character if lower
+     if clean_text and clean_text[0].islower():
+         clean_text = clean_text[0].upper() + clean_text[1:]
+@@ -50,13 +54,13 @@ class WhisperASREngine:
+         enable_itn: bool = True,
+         initial_prompt: str | None = DEFAULT_WHISPER_PROMPT,
+         attn_implementation: str | None = "sdpa",
+-        pre_roll_pad_ms: float = 40.0,
+-        post_roll_pad_ms: float = 40.0,
++        pre_roll_pad_ms: float = 60.0,
++        post_roll_pad_ms: float = 60.0,
+         peak_normalize: bool = True,
+         trim_silence: bool = True,
+         vad_db_threshold: float = -35.0,
+-        vad_margin_ms: float = 120.0,
+-        repetition_penalty: float = 1.05,
++        vad_margin_ms: float = 150.0,
++        repetition_penalty: float = 1.03,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -137,7 +141,7 @@ class WhisperASREngine:
+         frame_ms: float = 25.0,
+         hop_ms: float = 10.0,
+         db_threshold: float = -35.0,
+-        margin_ms: float = 120.0,
++        margin_ms: float = 150.0,
+     ) -> np.ndarray:
+         """Conservative energy-based boundary silence trimming with safety collar.
+ 
+@@ -183,7 +187,7 @@ class WhisperASREngine:
+                 waveform,
+                 sr=sr,
+                 db_threshold=getattr(self, "vad_db_threshold", -35.0),
+-                margin_ms=getattr(self, "vad_margin_ms", 120.0),
++                margin_ms=getattr(self, "vad_margin_ms", 150.0),
+             )
+ 
+         # 2. Peak amplitude normalization to 0.95 to optimize Mel filterbank dynamic headroom
+@@ -212,6 +216,7 @@ class WhisperASREngine:
+             "task": self.task,
+             "do_sample": False,
+             "max_new_tokens": 128,
++            "return_timestamps": False,
+         }
+ 
+         if getattr(self, "repetition_penalty", 1.0) and self.repetition_penalty != 1.0:

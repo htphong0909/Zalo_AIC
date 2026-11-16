@@ -1,0 +1,10 @@
+{
+  "loop": 12,
+  "timestamp": "2026-11-06T00:42:19.889429",
+  "optimization_summary": "Linear peak amplitude normalization to 0.95 combined with conversational vocative prompt de-biasing",
+  "diff_stat": "configs/agent_loop_state.json | 40 ++++++++++++++++++++++++++++++++--------\n src/asr/whisper_engine.py     | 29 +++++++++++++++++++++++------\n 2 files changed, 55 insertions(+), 14 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "74/74 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

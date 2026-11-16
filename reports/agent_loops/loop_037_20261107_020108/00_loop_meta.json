@@ -1,0 +1,8 @@
+{
+  "loop": 37,
+  "hypothesis": "Domain Prompt Harmonization: Disambiguate conditional onset priors ('Nếu' vs 'Điều') and colloquial discourse markers ('Dạ', 'Zalo') to eliminate acoustic-phonetic confusion without model degradation",
+  "start_time": "2026-11-07T02:01:08.006512",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "loop-researcher"
+}

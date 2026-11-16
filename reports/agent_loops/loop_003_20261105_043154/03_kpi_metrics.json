@@ -1,0 +1,24 @@
+{
+  "loop": 3,
+  "hypothesis": "Zalo-specialized PhoWhisper Large (1.54B) with Vietnamese ITN and domain prompt conditioning",
+  "decision": "ACCEPTED",
+  "reason": "Dev WER improved (-10.68%) or EM improved (+60.87%) without train collapse",
+  "train": {
+    "wer": 1.44,
+    "cer": 1.24,
+    "sentence_em": 88.67,
+    "latency": 1.4924
+  },
+  "dev": {
+    "wer": 1.74,
+    "cer": 1.2,
+    "sentence_em": 85.62,
+    "latency": 1.3979
+  },
+  "deltas": {
+    "delta_dev_wer": -10.68,
+    "delta_dev_cer": -7.79,
+    "delta_dev_em": 60.870000000000005,
+    "delta_train_wer": -4.35
+  }
+}

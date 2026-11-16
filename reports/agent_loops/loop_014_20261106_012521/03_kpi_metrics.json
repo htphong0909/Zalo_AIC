@@ -1,0 +1,24 @@
+{
+  "loop": 14,
+  "hypothesis": "Autoregressive repetition penalty decoding (1.05) combined with conservative acoustic boundary silence trimming (-35 dB, 120ms collar margin) eliminates phrase echo loops and room-noise onset hallucinations while maintaining the golden Loop #12 prompt.",
+  "decision": "ACCEPTED",
+  "reason": "Dev WER improved (-0.01%) or EM improved (-0.33%) without train collapse",
+  "train": {
+    "wer": 1.02,
+    "cer": 0.91,
+    "sentence_em": 92.0,
+    "latency": 0.36
+  },
+  "dev": {
+    "wer": 1.56,
+    "cer": 1.05,
+    "sentence_em": 86.96,
+    "latency": 0.3381
+  },
+  "deltas": {
+    "delta_dev_wer": -0.010000000000000009,
+    "delta_dev_cer": -0.040000000000000036,
+    "delta_dev_em": -0.3300000000000125,
+    "delta_train_wer": 0.030000000000000027
+  }
+}

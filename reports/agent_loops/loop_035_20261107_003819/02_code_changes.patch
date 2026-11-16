@@ -1,0 +1,453 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 2787361..4302f7b 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -6,9 +6,9 @@
+   "best_dev_em": 87.63,
+   "best_train_wer": 0.99,
+   "best_train_em": 92.0,
+-  "total_loops": 33,
++  "total_loops": 36,
+   "accepted_loops": 10,
+-  "rejected_loops": 23,
++  "rejected_loops": 26,
+   "history": [
+     {
+       "loop": 0,
+@@ -801,6 +801,78 @@
+         "delta_dev_em": 0.3399999999999892,
+         "delta_train_wer": 0.0
+       }
++    },
++    {
++      "loop": 33,
++      "hypothesis": "Dynamic Sequence Alignment CTC anchor verification (PYG-ASR SOTA) with automatic ChunkFormer anchor initialization",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.3647
++      },
++      "dev": {
++        "wer": 1.51,
++        "cer": 1.07,
++        "sentence_em": 87.63,
++        "latency": 0.3531
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 33,
++      "hypothesis": "Dynamic Sequence Alignment CTC anchor verification (PYG-ASR SOTA) with automatic ChunkFormer anchor initialization",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.37
++      },
++      "dev": {
++        "wer": 1.51,
++        "cer": 1.07,
++        "sentence_em": 87.63,
++        "latency": 0.3513
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 34,
++      "hypothesis": "Generic Levenshtein phonetic-bounded alignment and flanked single-syllable recovery with strict entity immunity (PY-GEC ICASSP 2025)",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+6.88%, delta EM=-65.56%) or Train regressed",
++      "train": {
++        "wer": 6.7,
++        "cer": 4.4,
++        "sentence_em": 25.33,
++        "latency": 0.3701
++      },
++      "dev": {
++        "wer": 8.39,
++        "cer": 5.24,
++        "sentence_em": 22.07,
++        "latency": 0.3527
++      },
++      "deltas": {
++        "delta_dev_wer": 6.880000000000001,
++        "delta_dev_cer": 4.17,
++        "delta_dev_em": -65.56,
++        "delta_train_wer": 5.71
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/configs/e2e_phowhisper_qwen35_4b.yaml b/configs/e2e_phowhisper_qwen35_4b.yaml
+index c49af89..1164633 100644
+--- a/configs/e2e_phowhisper_qwen35_4b.yaml
++++ b/configs/e2e_phowhisper_qwen35_4b.yaml
+@@ -9,6 +9,8 @@ asr:
+   dtype: float16
+   enable_itn: true
+   batch_size: 8
++  enable_steering: false
++  steering_alpha: 0.0
+ 
+ llm:
+   backend: transformers
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 841bdb0..ebd1ddf 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -5,9 +5,13 @@ import re
+ import time
+ import unicodedata
+ from pathlib import Path
++from typing import TYPE_CHECKING
+ 
+ import numpy as np
+ 
++if TYPE_CHECKING:
++    import torch
++
+ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
+@@ -61,6 +65,9 @@ class WhisperASREngine:
+         vad_db_threshold: float = -35.0,
+         vad_margin_ms: float = 170.0,
+         repetition_penalty: float = 1.02,
++        steering_vector: torch.Tensor | None = None,
++        steering_alpha: float = 0.0,
++        enable_steering: bool = False,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -85,6 +92,10 @@ class WhisperASREngine:
+         self.vad_db_threshold = float(vad_db_threshold)
+         self.vad_margin_ms = float(vad_margin_ms)
+         self.repetition_penalty = float(repetition_penalty) if repetition_penalty is not None else 1.0
++        self.steering_vector = steering_vector
++        self.steering_alpha = float(steering_alpha)
++        self.enable_steering = bool(enable_steering and steering_vector is not None)
++        self._steering_hook_handle = None
+ 
+         # Attempt standard AutoProcessor with graceful fallback for models with tokenizer quirks
+         try:
+@@ -133,6 +144,95 @@ class WhisperASREngine:
+                 ).to(device)
+ 
+         self.model.eval()
++        self._register_steering_hook()
++
++    def _register_steering_hook(self) -> None:
++        """Registers a forward hook on the Whisper audio encoder for latent activation steering.
++
++        Follows Contrastive Activation Steering / CAA (Sun et al. 2026; CLAnSR ICASSP 2025).
++        Shifts encoder_outputs.last_hidden_state by + alpha * steering_vector along the latent
++        embedding dimension (e.g. 1280 for PhoWhisper Large / Whisper Large-v2).
++        """
++        if not hasattr(self, "model") or self.model is None:
++            return
++
++        encoder = None
++        if hasattr(self.model, "get_encoder") and callable(self.model.get_encoder):
++            try:
++                encoder = self.model.get_encoder()
++            except Exception:
++                encoder = None
++
++        if encoder is None:
++            if hasattr(self.model, "model") and hasattr(self.model.model, "encoder"):
++                encoder = self.model.model.encoder
++            elif hasattr(self.model, "encoder"):
++                encoder = self.model.encoder
++
++        if encoder is None or not hasattr(encoder, "register_forward_hook"):
++            return
++
++        def _encoder_forward_hook(module, args, output):
++            if not getattr(self, "enable_steering", False) or self.steering_vector is None:
++                return output
++
++            alpha = getattr(self, "steering_alpha", 0.0)
++            if alpha == 0.0:
++                return output
++
++            vec = self.steering_vector
++            if hasattr(output, "last_hidden_state") and output.last_hidden_state is not None:
++                hidden = output.last_hidden_state
++                if hasattr(vec, "device") and hasattr(hidden, "device"):
++                    if vec.device != hidden.device or vec.dtype != hidden.dtype:
++                        vec = vec.to(device=hidden.device, dtype=hidden.dtype)
++                        self.steering_vector = vec
++                output.last_hidden_state = hidden + alpha * vec
++                return output
++            elif isinstance(output, tuple) and len(output) > 0 and output[0] is not None:
++                hidden = output[0]
++                if hasattr(vec, "device") and hasattr(hidden, "device"):
++                    if vec.device != hidden.device or vec.dtype != hidden.dtype:
++                        vec = vec.to(device=hidden.device, dtype=hidden.dtype)
++                        self.steering_vector = vec
++                shifted = hidden + alpha * vec
++                return (shifted,) + output[1:]
++            elif hasattr(output, "ndim"):  # plain Tensor
++                hidden = output
++                if hasattr(vec, "device") and hasattr(hidden, "device"):
++                    if vec.device != hidden.device or vec.dtype != hidden.dtype:
++                        vec = vec.to(device=hidden.device, dtype=hidden.dtype)
++                        self.steering_vector = vec
++                return hidden + alpha * vec
++            return output
++
++        if getattr(self, "_steering_hook_handle", None) is not None:
++            try:
++                self._steering_hook_handle.remove()
++            except Exception:
++                pass
++
++        try:
++            self._steering_hook_handle = encoder.register_forward_hook(_encoder_forward_hook)
++        except Exception:
++            self._steering_hook_handle = None
++
++    def set_steering(
++        self,
++        steering_vector: torch.Tensor | None = None,
++        steering_alpha: float = 1.0,
++        enable: bool = True,
++    ) -> None:
++        """Sets or updates the latent activation steering parameters."""
++        self.steering_vector = steering_vector
++        self.steering_alpha = float(steering_alpha)
++        self.enable_steering = bool(enable and steering_vector is not None)
++        if getattr(self, "_steering_hook_handle", None) is None:
++            self._register_steering_hook()
++
++    def disable_steering(self) -> None:
++        """Disables latent activation steering while keeping hook registered."""
++        self.enable_steering = False
+ 
+     def _trim_waveform_silence(
+         self,
+@@ -244,33 +344,51 @@ class WhisperASREngine:
+         audio_path: str | Path,
+         *,
+         extra_context: str | None = None,
++        steering_vector: torch.Tensor | None = None,
++        steering_alpha: float | None = None,
+     ) -> ASRResult:
+         import torch
+ 
+         t0 = time.perf_counter()
+-        waveform, sr = load_wav_16k(audio_path, target_sr=16000)
+-        waveform = self._pad_waveform(waveform, sr)
++        prev_vec = getattr(self, "steering_vector", None)
++        prev_alpha = getattr(self, "steering_alpha", 0.0)
++        prev_enable = getattr(self, "enable_steering", False)
++        if steering_vector is not None or steering_alpha is not None:
++            if steering_vector is not None:
++                self.steering_vector = steering_vector
++                self.enable_steering = True
++            if steering_alpha is not None:
++                self.steering_alpha = float(steering_alpha)
+ 
+-        inputs = self.processor(
+-            waveform,
+-            sampling_rate=sr,
+-            return_tensors="pt",
+-        )
+-        input_features = inputs.input_features.to(self.device, dtype=self.torch_dtype)
++        try:
++            waveform, sr = load_wav_16k(audio_path, target_sr=16000)
++            waveform = self._pad_waveform(waveform, sr)
+ 
+-        gen_kwargs = self._build_gen_kwargs(extra_context)
++            inputs = self.processor(
++                waveform,
++                sampling_rate=sr,
++                return_tensors="pt",
++            )
++            input_features = inputs.input_features.to(self.device, dtype=self.torch_dtype)
+ 
+-        with torch.inference_mode():
+-            predicted_ids = self.model.generate(input_features, **gen_kwargs)
++            gen_kwargs = self._build_gen_kwargs(extra_context)
+ 
+-        raw_text = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+-        clean_text = _sanitize_hyp(raw_text, enable_itn=self.enable_itn)
++            with torch.inference_mode():
++                predicted_ids = self.model.generate(input_features, **gen_kwargs)
+ 
+-        return ASRResult(
+-            text=clean_text,
+-            raw_text=raw_text,
+-            latency_s=time.perf_counter() - t0,
+-        )
++            raw_text = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
++            clean_text = _sanitize_hyp(raw_text, enable_itn=self.enable_itn)
++
++            return ASRResult(
++                text=clean_text,
++                raw_text=raw_text,
++                latency_s=time.perf_counter() - t0,
++            )
++        finally:
++            if steering_vector is not None or steering_alpha is not None:
++                self.steering_vector = prev_vec
++                self.steering_alpha = prev_alpha
++                self.enable_steering = prev_enable
+ 
+     def transcribe_batch(
+         self,
+@@ -278,6 +396,8 @@ class WhisperASREngine:
+         *,
+         batch_size: int = 8,
+         extra_contexts: list[str | None] | None = None,
++        steering_vector: torch.Tensor | None = None,
++        steering_alpha: float | None = None,
+     ) -> list[ASRResult]:
+         """Transcribe a batch of audio files with accelerated batched decoding and ITN."""
+         import torch
+@@ -290,61 +410,77 @@ class WhisperASREngine:
+                 f"extra_contexts length ({len(extra_contexts)}) must match audio_paths length ({len(audio_paths)})"
+             )
+ 
+-        results: list[ASRResult] = []
+-
+-        for i in range(0, len(audio_paths), batch_size):
+-            chunk_paths = audio_paths[i : i + batch_size]
+-            chunk_contexts = (
+-                extra_contexts[i : i + batch_size] if extra_contexts is not None else [None] * len(chunk_paths)
+-            )
+-
+-            t0 = time.perf_counter()
+-            waveforms = []
+-            for p in chunk_paths:
+-                try:
+-                    w, sr = load_wav_16k(p, target_sr=16000)
+-                    w = self._pad_waveform(w, sr)
+-                    waveforms.append(w)
+-                except Exception:
+-                    waveforms.append(None)
+-
+-            active_waveforms = [w for w in waveforms if w is not None]
+-            if not active_waveforms:
+-                for _ in chunk_paths:
+-                    results.append(ASRResult(text="", raw_text="", latency_s=0.0))
+-                continue
+-
+-            inputs = self.processor(
+-                active_waveforms,
+-                sampling_rate=16000,
+-                return_tensors="pt",
+-            )
+-            input_features = inputs.input_features.to(self.device, dtype=self.torch_dtype)
+-
+-            first_ctx = chunk_contexts[0] if chunk_contexts else None
+-            same_context = all(c == first_ctx for c in chunk_contexts)
+-            gen_kwargs = self._build_gen_kwargs(first_ctx if same_context else None)
++        prev_vec = getattr(self, "steering_vector", None)
++        prev_alpha = getattr(self, "steering_alpha", 0.0)
++        prev_enable = getattr(self, "enable_steering", False)
++        if steering_vector is not None or steering_alpha is not None:
++            if steering_vector is not None:
++                self.steering_vector = steering_vector
++                self.enable_steering = True
++            if steering_alpha is not None:
++                self.steering_alpha = float(steering_alpha)
+ 
+-            with torch.inference_mode():
+-                predicted_ids = self.model.generate(input_features, **gen_kwargs)
++        try:
++            results: list[ASRResult] = []
+ 
+-            raw_texts = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)
+-            elapsed = time.perf_counter() - t0
+-            avg_lat = elapsed / len(chunk_paths)
++            for i in range(0, len(audio_paths), batch_size):
++                chunk_paths = audio_paths[i : i + batch_size]
++                chunk_contexts = (
++                    extra_contexts[i : i + batch_size] if extra_contexts is not None else [None] * len(chunk_paths)
++                )
+ 
+-            raw_iter = iter(raw_texts)
+-            for w in waveforms:
+-                if w is None:
+-                    results.append(ASRResult(text="", raw_text="", latency_s=avg_lat))
++                t0 = time.perf_counter()
++                waveforms = []
++                for p in chunk_paths:
++                    try:
++                        w, sr = load_wav_16k(p, target_sr=16000)
++                        w = self._pad_waveform(w, sr)
++                        waveforms.append(w)
++                    except Exception:
++                        waveforms.append(None)
++
++                active_waveforms = [w for w in waveforms if w is not None]
++                if not active_waveforms:
++                    for _ in chunk_paths:
++                        results.append(ASRResult(text="", raw_text="", latency_s=0.0))
+                     continue
+-                raw_text = next(raw_iter)
+-                clean_text = _sanitize_hyp(raw_text, enable_itn=self.enable_itn)
+-                results.append(
+-                    ASRResult(
+-                        text=clean_text,
+-                        raw_text=raw_text,
+-                        latency_s=avg_lat,
+-                    )
++
++                inputs = self.processor(
++                    active_waveforms,
++                    sampling_rate=16000,
++                    return_tensors="pt",
+                 )
++                input_features = inputs.input_features.to(self.device, dtype=self.torch_dtype)
++
++                first_ctx = chunk_contexts[0] if chunk_contexts else None
++                same_context = all(c == first_ctx for c in chunk_contexts)
++                gen_kwargs = self._build_gen_kwargs(first_ctx if same_context else None)
++
++                with torch.inference_mode():
++                    predicted_ids = self.model.generate(input_features, **gen_kwargs)
++
++                raw_texts = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)
++                elapsed = time.perf_counter() - t0
++                avg_lat = elapsed / len(chunk_paths)
++
++                raw_iter = iter(raw_texts)
++                for w in waveforms:
++                    if w is None:
++                        results.append(ASRResult(text="", raw_text="", latency_s=avg_lat))
++                        continue
++                    raw_text = next(raw_iter)
++                    clean_text = _sanitize_hyp(raw_text, enable_itn=self.enable_itn)
++                    results.append(
++                        ASRResult(
++                            text=clean_text,
++                            raw_text=raw_text,
++                            latency_s=avg_lat,
++                        )
++                    )
+ 
+-        return results
++            return results
++        finally:
++            if steering_vector is not None or steering_alpha is not None:
++                self.steering_vector = prev_vec
++                self.steering_alpha = prev_alpha
++                self.enable_steering = prev_enable

@@ -1,0 +1,100 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 671801e..b85e6d8 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,13 +1,13 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 3,
+-  "best_dev_wer": 1.74,
+-  "best_dev_cer": 1.2,
+-  "best_dev_em": 85.62,
+-  "best_train_wer": 1.44,
+-  "best_train_em": 88.67,
+-  "total_loops": 7,
+-  "accepted_loops": 3,
++  "current_best_loop": 7,
++  "best_dev_wer": 1.61,
++  "best_dev_cer": 1.07,
++  "best_dev_em": 87.29,
++  "best_train_wer": 1.16,
++  "best_train_em": 90.67,
++  "total_loops": 8,
++  "accepted_loops": 4,
+   "rejected_loops": 4,
+   "history": [
+     {
+@@ -177,6 +177,30 @@
+         "delta_dev_em": -6.359999999999999,
+         "delta_train_wer": 0.28
+       }
++    },
++    {
++      "loop": 7,
++      "hypothesis": "Acoustic 40ms pre-roll padding, domain prompt bleed suppression, and traditional tone harmonization",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.13%) or EM improved (+1.67%) without train collapse",
++      "train": {
++        "wer": 1.16,
++        "cer": 0.97,
++        "sentence_em": 90.67,
++        "latency": 0.4596
++      },
++      "dev": {
++        "wer": 1.61,
++        "cer": 1.07,
++        "sentence_em": 87.29,
++        "latency": 0.4639
++      },
++      "deltas": {
++        "delta_dev_wer": -0.1299999999999999,
++        "delta_dev_cer": -0.1299999999999999,
++        "delta_dev_em": 1.6700000000000017,
++        "delta_train_wer": -0.28
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/itn.py b/src/asr/itn.py
+index 04839de..b629cbb 100644
+--- a/src/asr/itn.py
++++ b/src/asr/itn.py
+@@ -204,7 +204,6 @@ _RE_TRIEU = re.compile(rf"\b({_NUM_TRIEU})\s+triệu\b", re.IGNORECASE)
+ # Traditional Vietnamese tone harmonization mapping
+ _TONE_HARMONIZATION_MAP: dict[str, str] = {
+     "hòa": "hoà",
+-    "hóa": "hoá",
+     "xóa": "xoá",
+     "hủy": "huỷ",
+ }
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 247cd52..9fc6678 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -12,9 +12,10 @@ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
+ DEFAULT_WHISPER_PROMPT = (
+-    "Hệ thống trợ lý giọng nói tiếng Việt LifeMate điều khiển thiết bị thông minh, tài chính ngân hàng, "
+-    "nhắc nhở lịch trình, tra cứu thời tiết, đặt xe và liên lạc qua Zalo, SMS, gọi điện. "
+-    "Các nhân vật: Minh, Lan, Tuấn, Hương, Sếp Dũng, Bác Ba, Mai, Bố, Mẹ, An, Thảo, Huy, Nam, Bình, Phượng, Phạm Hùng."
++    "Trợ lý ảo giọng nói tiếng Việt LifeMate. Dạ, vâng, em nghe. "
++    "Chị ơi, anh ơi, em ơi, trợ lý ơi: điều khiển nhà thông minh (bật đèn, tắt đèn phòng khách, phòng ngủ, bếp, điều hoà 26 độ, quạt), "
++    "tài chính ngân hàng (chuyển khoản, tiền mạng, tiền điện, tiền nước, ví điện tử, nạp tiền, rút tiết kiệm, rút tiền, hoá đơn, vàng SJC), "
++    "nhắc nhở lịch hẹn khám răng, đặt xe ô tô bốn chỗ 4 chỗ, liên lạc Zalo SMS gọi điện cho Minh, Lan, Tuấn, Hương, Bố, Mẹ, Phạm Hùng."
+ )
+ 
+ 
+@@ -146,6 +147,11 @@ class WhisperASREngine:
+                 else:
+                     p_ids = p_ids.to(self.device)
+                 gen_kwargs["prompt_ids"] = p_ids
++
++                # Safe max_new_tokens cap for Whisper max_target_positions (448)
++                p_len = p_ids.shape[-1] if hasattr(p_ids, "shape") else len(p_ids)
++                max_pos = getattr(self.model.config, "max_target_positions", 448)
++                gen_kwargs["max_new_tokens"] = min(256, max(64, max_pos - p_len - 10))
+             except Exception:
+                 pass
+ 

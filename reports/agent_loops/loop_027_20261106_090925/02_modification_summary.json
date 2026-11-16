@@ -1,0 +1,10 @@
+{
+  "loop": 27,
+  "timestamp": "2026-11-06T09:13:52.900735",
+  "optimization_summary": "vad_db_threshold -35.0 -> -40.0, vad_margin_ms 150.0 -> 200.0",
+  "diff_stat": "src/asr/whisper_engine.py | 12 ++++++------\n 1 file changed, 6 insertions(+), 6 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "68/68 passed",
+  "audit_passed": true,
+  "audit_notes": "Clean acoustic VAD sensitivity relaxation, zero dev leakage, size budget ok"
+}

@@ -1,0 +1,50 @@
+name: minicpm5_dpo_targeted
+seed: 42
+
+model:
+  base_model: openbmb/MiniCPM5-2B-SFT
+  init_adapter: null  # Optional: path to SFT V2 adapter to warm-start
+  torch_dtype: bfloat16
+  max_length: 8192
+
+lora:
+  r: 64
+  alpha: 128
+  dropout: 0.05
+  bias: none
+  task_type: CAUSAL_LM
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+training:
+  num_train_epochs: 1.0
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 3.0e-6
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.1
+  beta: 0.1
+  loss_type:
+    - sigmoid
+    - sft
+  loss_weights:
+    - 1.0
+    - 0.2
+  logging_steps: 5
+  save_strategy: "no"
+  bf16: true
+  fp16: false
+
+data:
+  train_file: data/dpo/minicpm5_dpo_pairs.jsonl.gz
+
+hf_sync:
+  repo: htphong0909/zalo-aic-sft-checkpoints
+  prefix: exp_branchA_dpo_v1
+  interval_min: 10.0

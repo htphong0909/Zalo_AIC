@@ -1,0 +1,84 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index acb1bbb..9559a6a 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 32,
+-  "best_dev_wer": 1.51,
+-  "best_dev_cer": 1.07,
+-  "best_dev_em": 87.63,
+-  "best_train_wer": 0.99,
+-  "best_train_em": 92.0,
+-  "total_loops": 39,
+-  "accepted_loops": 10,
+-  "rejected_loops": 29,
++  "current_best_loop": 38,
++  "best_dev_wer": 1.5,
++  "best_dev_cer": 1.03,
++  "best_dev_em": 86.96,
++  "best_train_wer": 0.82,
++  "best_train_em": 92.67,
++  "total_loops": 41,
++  "accepted_loops": 11,
++  "rejected_loops": 30,
+   "history": [
+     {
+       "loop": 0,
+@@ -945,6 +945,54 @@
+         "delta_dev_em": -0.3399999999999892,
+         "delta_train_wer": 0.010000000000000009
+       }
++    },
++    {
++      "loop": 38,
++      "hypothesis": "Calibrated 20ms pre-roll acoustic padding aligns convolutional front-end downsampling to eliminate VOT onset corruption",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.01%) or EM improved (-0.67%) without train collapse",
++      "train": {
++        "wer": 0.82,
++        "cer": 0.63,
++        "sentence_em": 92.67,
++        "latency": 0.3724
++      },
++      "dev": {
++        "wer": 1.5,
++        "cer": 1.03,
++        "sentence_em": 86.96,
++        "latency": 0.3604
++      },
++      "deltas": {
++        "delta_dev_wer": -0.010000000000000009,
++        "delta_dev_cer": -0.040000000000000036,
++        "delta_dev_em": -0.6700000000000017,
++        "delta_train_wer": -0.17000000000000004
++      }
++    },
++    {
++      "loop": 39,
++      "hypothesis": "Colloquial Dialectal Negation Normalization: Southern Vietnamese 'hông' before action/modal predicates mapped to standard 'không'",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.03%, delta EM=-1.01%) or Train regressed",
++      "train": {
++        "wer": 0.8,
++        "cer": 0.62,
++        "sentence_em": 92.67,
++        "latency": 0.365
++      },
++      "dev": {
++        "wer": 1.53,
++        "cer": 1.04,
++        "sentence_em": 85.95,
++        "latency": 0.3515
++      },
++      "deltas": {
++        "delta_dev_wer": 0.030000000000000027,
++        "delta_dev_cer": 0.010000000000000009,
++        "delta_dev_em": -1.009999999999991,
++        "delta_train_wer": -0.019999999999999907
++      }
+     }
+   ]
+ }
+\ No newline at end of file

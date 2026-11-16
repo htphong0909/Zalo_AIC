@@ -1,0 +1,10 @@
+{
+  "loop": 22,
+  "timestamp": "2026-11-06T08:00:14.311809",
+  "optimization_summary": "Southern conversational negative particle normalization standardizing pre-predicate debuccalized [hɔŋ] to formal written không",
+  "diff_stat": "configs/agent_loop_state.json | 134 +++++++++++++++++++++++++++++++++++++++---\n src/asr/itn.py                |  25 ++++++++\n 2 files changed, 152 insertions(+), 7 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "69/69 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

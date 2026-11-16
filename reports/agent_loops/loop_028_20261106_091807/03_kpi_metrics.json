@@ -1,0 +1,24 @@
+{
+  "loop": 28,
+  "hypothesis": "Asymmetric VAD margin geometry (200ms pre-speech margin, 120ms post-speech margin at -35dB threshold) captures low-energy voice onsets without capturing trailing exhalations",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.07%, delta EM=+0.34%) or Train regressed",
+  "train": {
+    "wer": 1.03,
+    "cer": 0.9,
+    "sentence_em": 92.0,
+    "latency": 0.3705
+  },
+  "dev": {
+    "wer": 1.59,
+    "cer": 1.1,
+    "sentence_em": 87.63,
+    "latency": 0.3559
+  },
+  "deltas": {
+    "delta_dev_wer": 0.07000000000000006,
+    "delta_dev_cer": 0.020000000000000018,
+    "delta_dev_em": 0.3399999999999892,
+    "delta_train_wer": 0.040000000000000036
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "loop": 20,
+  "hypothesis": "Neutral topic-noun prompt restructuring eliminating action verb prefix bias combined with non-destructive ITN tone preservation",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.10%, delta EM=+1.33%) or Train regressed",
+  "train": {
+    "wer": 0.92,
+    "cer": 0.84,
+    "sentence_em": 92.67,
+    "latency": 0.3654
+  },
+  "dev": {
+    "wer": 1.65,
+    "cer": 1.18,
+    "sentence_em": 88.29,
+    "latency": 0.3568
+  },
+  "deltas": {
+    "delta_dev_wer": 0.09999999999999987,
+    "delta_dev_cer": 0.08999999999999986,
+    "delta_dev_em": 1.3300000000000125,
+    "delta_train_wer": -0.06999999999999995
+  }
+}

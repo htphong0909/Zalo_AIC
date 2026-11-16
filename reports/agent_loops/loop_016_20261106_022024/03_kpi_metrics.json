@@ -1,0 +1,24 @@
+{
+  "loop": 16,
+  "hypothesis": "Domain-conditioned Vietnamese ITN and orthographic harmonization engine resolving colloquial contracted compound numerals (hai lăm, bốn lăm), expanded clock kém and financial ranges, modern nucleus tone harmonization (khoá, toà), and canonical acronym casing.",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.15%, delta EM=-2.01%) or Train regressed",
+  "train": {
+    "wer": 1.04,
+    "cer": 0.92,
+    "sentence_em": 91.33,
+    "latency": 0.3705
+  },
+  "dev": {
+    "wer": 1.71,
+    "cer": 1.16,
+    "sentence_em": 84.95,
+    "latency": 0.3478
+  },
+  "deltas": {
+    "delta_dev_wer": 0.1499999999999999,
+    "delta_dev_cer": 0.10999999999999988,
+    "delta_dev_em": -2.009999999999991,
+    "delta_train_wer": 0.020000000000000018
+  }
+}

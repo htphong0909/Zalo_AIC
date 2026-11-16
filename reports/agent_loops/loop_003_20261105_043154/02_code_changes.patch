@@ -1,0 +1,574 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 6973b46..4669295 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 0,
+-  "best_dev_wer": 28.79,
+-  "best_dev_cer": 20.42,
+-  "best_dev_em": 2.01,
+-  "best_train_wer": 31.23,
+-  "best_train_em": 2.0,
+-  "total_loops": 1,
+-  "accepted_loops": 1,
+-  "rejected_loops": 0,
++  "current_best_loop": 1,
++  "best_dev_wer": 12.42,
++  "best_dev_cer": 8.99,
++  "best_dev_em": 24.75,
++  "best_train_wer": 5.79,
++  "best_train_em": 44.67,
++  "total_loops": 3,
++  "accepted_loops": 2,
++  "rejected_loops": 1,
+   "history": [
+     {
+       "loop": 0,
+@@ -33,6 +33,54 @@
+         "delta_dev_em": 0.0,
+         "delta_train_wer": 0.0
+       }
++    },
++    {
++      "loop": 1,
++      "hypothesis": "LoRA SFT (r=16, alpha=32) on duclvQ/qwen3-asr-1.7b-vimd-full with LifeMate train audio (4042 clips)",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-16.37%) or EM improved (+22.74%) without train collapse",
++      "train": {
++        "wer": 5.79,
++        "cer": 4.9,
++        "sentence_em": 44.67,
++        "latency": 0.3311
++      },
++      "dev": {
++        "wer": 12.42,
++        "cer": 8.99,
++        "sentence_em": 24.75,
++        "latency": 0.3299
++      },
++      "deltas": {
++        "delta_dev_wer": -16.369999999999997,
++        "delta_dev_cer": -11.430000000000001,
++        "delta_dev_em": 22.740000000000002,
++        "delta_train_wer": -25.44
++      }
++    },
++    {
++      "loop": 2,
++      "hypothesis": "Deterministic Vietnamese Inverse Text Normalization (ITN) and orthographic diacritic harmonization",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+15.82%, delta EM=-22.74%) or Train regressed",
++      "train": {
++        "wer": 29.32,
++        "cer": 22.71,
++        "sentence_em": 2.0,
++        "latency": 0.402
++      },
++      "dev": {
++        "wer": 28.24,
++        "cer": 19.88,
++        "sentence_em": 2.01,
++        "latency": 0.3333
++      },
++      "deltas": {
++        "delta_dev_wer": 15.819999999999999,
++        "delta_dev_cer": 10.889999999999999,
++        "delta_dev_em": -22.740000000000002,
++        "delta_train_wer": 23.53
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/configs/e2e_phowhisper_qwen35_4b.yaml b/configs/e2e_phowhisper_qwen35_4b.yaml
+new file mode 100644
+index 0000000..c49af89
+--- /dev/null
++++ b/configs/e2e_phowhisper_qwen35_4b.yaml
+@@ -0,0 +1,33 @@
++name: e2e_phowhisper_qwen35_4b
++seed: 42
++
++asr:
++  engine: whisper
++  model_id: kzap201/phowhisper-large-zaloai
++  language: vi
++  task: transcribe
++  dtype: float16
++  enable_itn: true
++  batch_size: 8
++
++llm:
++  backend: transformers
++  model_id: Qwen/Qwen3.5-4B
++  adapter_path: null
++  max_model_len: 16384
++  max_new_tokens: 384
++  enable_thinking: false
++  dtype: bfloat16
++
++agent:
++  prompt_style: v1
++  tool_selector: installed_apps
++  max_steps: 8
++  max_repairs: 2
++  timeout_s: 25.0
++  max_prompt_tokens: 12000
++  max_result_chars: 1500
++  guardrails:
++    enable_xref_guard: true
++    enable_arg_sanitizer: true
++    enable_ask_guard: true
+diff --git a/src/asr/base.py b/src/asr/base.py
+index 279453e..8aa9eb0 100644
+--- a/src/asr/base.py
++++ b/src/asr/base.py
+@@ -33,11 +33,22 @@ def strip_asr_tags(raw: str) -> str:
+ class FakeASREngine:
+     """Deterministic lookup-based ASR engine for unit testing."""
+ 
+-    def __init__(self, mapping: dict[str, str] | None = None, default_text: str = ""):
++    def __init__(
++        self,
++        mapping: dict[str, str] | None = None,
++        default_text: str = "",
++        enable_itn: bool = False,
++    ):
+         self.mapping = dict(mapping or {})
+         self.default_text = default_text
++        self.enable_itn = enable_itn
+ 
+     def transcribe(self, audio_path: str | Path) -> ASRResult:
+         key = Path(audio_path).name
+         raw = self.mapping.get(str(audio_path), self.mapping.get(key, self.default_text))
+-        return ASRResult(text=strip_asr_tags(raw), raw_text=raw, latency_s=0.0)
++        text = strip_asr_tags(raw)
++        if self.enable_itn:
++            from src.asr.itn import inverse_text_normalize
++
++            text = inverse_text_normalize(text)
++        return ASRResult(text=text, raw_text=raw, latency_s=0.0)
+diff --git a/src/asr/itn.py b/src/asr/itn.py
+new file mode 100644
+index 0000000..96b6af5
+--- /dev/null
++++ b/src/asr/itn.py
+@@ -0,0 +1,267 @@
++"""Vietnamese Inverse Text Normalization (ITN) and orthographic standardization engine."""
++from __future__ import annotations
++
++import re
++import unicodedata
++
++# Single-token digit values
++_DIGITS: dict[str, int] = {
++    "không": 0,
++    "linh": 0,
++    "lẻ": 0,
++    "một": 1,
++    "mốt": 1,
++    "hai": 2,
++    "ba": 3,
++    "bốn": 4,
++    "tư": 4,
++    "năm": 5,
++    "lăm": 5,
++    "nhăm": 5,
++    "sáu": 6,
++    "bảy": 7,
++    "bẩy": 7,
++    "tám": 8,
++    "chín": 9,
++}
++
++_NUM_WORDS_SET = set(_DIGITS.keys()) | {
++    "mười",
++    "mươi",
++    "chục",
++    "trăm",
++    "nghìn",
++    "ngàn",
++    "triệu",
++    "tỷ",
++}
++
++
++def _parse_under_thousand(toks: list[str]) -> int | None:
++    if not toks:
++        return 0
++    val = 0
++
++    # Parse hundreds if present
++    if "trăm" in toks:
++        idx = toks.index("trăm")
++        h_toks = toks[:idx]
++        if not h_toks:
++            h_val = 1
++        elif len(h_toks) == 1 and h_toks[0] in _DIGITS:
++            h_val = _DIGITS[h_toks[0]]
++        else:
++            return None
++        val += h_val * 100
++        toks = toks[idx + 1 :]
++        if not toks:
++            return val
++        if toks[0] in ("linh", "lẻ"):
++            toks = toks[1:]
++
++    if not toks:
++        return val
++
++    # Parse remaining tens & units
++    if len(toks) == 1:
++        t = toks[0]
++        if t == "mười":
++            return val + 10
++        if t in _DIGITS:
++            return val + _DIGITS[t]
++        return None
++
++    if len(toks) == 2:
++        t0, t1 = toks[0], toks[1]
++        if t0 == "mười" and t1 in _DIGITS:
++            return val + 10 + _DIGITS[t1]
++        if t1 in ("mươi", "chục") and t0 in _DIGITS:
++            return val + _DIGITS[t0] * 10
++        return None
++
++    if len(toks) == 3:
++        t0, t1, t2 = toks[0], toks[1], toks[2]
++        if t1 in ("mươi", "chục") and t0 in _DIGITS and t2 in _DIGITS:
++            return val + _DIGITS[t0] * 10 + _DIGITS[t2]
++        return None
++
++    return None
++
++
++def parse_vi_numeral(text_or_tokens: str | list[str]) -> int | None:
++    """Parse Vietnamese spoken numeral phrases (from 0 up to billions) into an integer.
++
++    Examples:
++        'không' -> 0
++        'mười lăm' -> 15
++        'hai mươi sáu' -> 26
++        'ba mươi' -> 30
++        'một trăm hai mươi ba' -> 123
++        '15' -> 15
++    """
++    if isinstance(text_or_tokens, str):
++        s = text_or_tokens.strip().lower()
++        if s.isdigit():
++            return int(s)
++        toks = s.split()
++    else:
++        toks = [t.strip().lower() for t in text_or_tokens if t.strip()]
++
++    if not toks:
++        return None
++
++    # Fast path for single token
++    if len(toks) == 1:
++        t = toks[0]
++        if t.isdigit():
++            return int(t)
++        if t == "mười":
++            return 10
++        if t in _DIGITS:
++            return _DIGITS[t]
++        if t == "trăm":
++            return 100
++        if t in ("nghìn", "ngàn"):
++            return 1000
++        if t == "triệu":
++            return 1000000
++        if t == "tỷ":
++            return 1000000000
++        return None
++
++    total = 0
++    rem = list(toks)
++
++    # Billions (tỷ)
++    if "tỷ" in rem:
++        idx = rem.index("tỷ")
++        b_val = _parse_under_thousand(rem[:idx])
++        if b_val is None:
++            return None
++        total += b_val * 1000000000
++        rem = rem[idx + 1 :]
++
++    # Millions (triệu)
++    if "triệu" in rem:
++        idx = rem.index("triệu")
++        m_val = _parse_under_thousand(rem[:idx])
++        if m_val is None:
++            return None
++        total += m_val * 1000000
++        rem = rem[idx + 1 :]
++
++    # Thousands (nghìn/ngàn)
++    if "nghìn" in rem or "ngàn" in rem:
++        idx = rem.index("nghìn") if "nghìn" in rem else rem.index("ngàn")
++        k_val = _parse_under_thousand(rem[:idx])
++        if k_val is None:
++            return None
++        total += k_val * 1000
++        rem = rem[idx + 1 :]
++
++    # Units under a thousand
++    if rem:
++        u_val = _parse_under_thousand(rem)
++        if u_val is None:
++            return None
++        total += u_val
++
++    return total
++
++
++# Precompiled regex patterns for inverse text normalization
++_NUM_KEM_AFTER = (
++    r"(?:mười\s+lăm|mười\s+năm|hai\s+mươi\s+lăm|hai\s+mươi|ba\s+mươi|"
++    r"mười\s+một|mười\s+hai|mười\s+ba|mười\s+bốn|mười\s+sáu|mười\s+bảy|mười\s+tám|mười\s+chín|mười|\d+)"
++)
++_NUM_KEM_BEFORE = (
++    r"(?:mười\s+hai|mười\s+một|mười|chín|tám|bảy|bẩy|sáu|năm|bốn|tư|ba|hai|một|\d+)"
++)
++_RE_KEM = re.compile(rf"\b({_NUM_KEM_BEFORE})\s+giờ\s+kém\s+({_NUM_KEM_AFTER})\b", re.IGNORECASE)
++
++_NUM_DO = (
++    r"(?:hai\s+mươi\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín)|"
++    r"ba\s+mươi\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín)|"
++    r"hai\s+mươi|ba\s+mươi|mười\s+sáu|mười\s+bảy|mười\s+tám|mười\s+chín)"
++)
++_RE_DO = re.compile(rf"\b({_NUM_DO})\s+độ\b", re.IGNORECASE)
++
++_NUM_PCT = (
++    r"(?:(?:mười|hai\s+mươi|ba\s+mươi|bốn\s+mươi|năm\s+mươi|sáu\s+mươi|bảy\s+mươi|tám\s+mươi|chín\s+mươi)"
++    r"(?:\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?|một\s+trăm|mười\s+lăm)"
++)
++_RE_PCT = re.compile(rf"\b({_NUM_PCT})\s+phần\s+trăm\b", re.IGNORECASE)
++
++_NUM_TRIEU = (
++    r"(?:(?:một|hai|ba|bốn|năm|sáu|bảy|tám|chín)\s+trăm(?:\s+(?:linh|lẻ)\s+(?:một|hai|ba|bốn|lăm|năm|sáu|bảy|tám|chín)|"
++    r"\s+(?:mười|hai\s+mươi|ba\s+mươi|bốn\s+mươi|năm\s+mươi|sáu\s+mươi|bảy\s+mươi|tám\s+mươi|chín\s+mươi)"
++    r"(?:\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?)?|"
++    r"(?:hai\s+mươi|ba\s+mươi|bốn\s+mươi|năm\s+mươi|sáu\s+mươi|bảy\s+mươi|tám\s+mươi|chín\s+mươi)"
++    r"(?:\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?)"
++)
++_RE_TRIEU = re.compile(rf"\b({_NUM_TRIEU})\s+triệu\b", re.IGNORECASE)
++
++_RE_HUY = re.compile(r"\bhủy\b", re.IGNORECASE)
++
++
++def inverse_text_normalize(text: str) -> str:
++    """Apply Vietnamese Inverse Text Normalization (ITN) and orthographic standardization.
++
++    Converts domain-conditioned spoken Vietnamese numerical constructs into standard written representations:
++    1. Time reminders with 'kém': 'chín giờ kém mười lăm' -> '9 giờ kém 15'
++    2. Appliance/ambient temperature: 'hai mươi sáu độ' -> '26 độ'
++    3. Lighting/intensity percentage: 'ba mươi phần trăm' -> '30 phần trăm'
++    4. Multi-digit financial quantities: 'một trăm hai mươi ba triệu' -> '123 triệu'
++    5. Traditional orthographic tone harmonization: 'hủy' -> 'huỷ'
++    """
++    if not text:
++        return ""
++
++    s = unicodedata.normalize("NFC", str(text))
++
++    # 1. Time expressions with 'kém'
++    def _sub_kem(m: re.Match) -> str:
++        h_str = m.group(1).strip()
++        m_str = m.group(2).strip()
++        h_val = parse_vi_numeral(h_str)
++        m_val = parse_vi_numeral(m_str)
++        if h_val is not None and m_val is not None:
++            return f"{h_val} giờ kém {m_val}"
++        return m.group(0)
++
++    s = _RE_KEM.sub(_sub_kem, s)
++
++    # 2. Ambient / device temperature
++    def _sub_do(m: re.Match) -> str:
++        num_str = m.group(1).strip()
++        val = parse_vi_numeral(num_str)
++        if val is not None and 10 <= val <= 45:
++            return f"{val} độ"
++        return m.group(0)
++
++    s = _RE_DO.sub(_sub_do, s)
++
++    # 3. Percentage / ratio
++    def _sub_pct(m: re.Match) -> str:
++        num_str = m.group(1).strip()
++        val = parse_vi_numeral(num_str)
++        if val is not None and 0 <= val <= 100:
++            return f"{val} phần trăm"
++        return m.group(0)
++
++    s = _RE_PCT.sub(_sub_pct, s)
++
++    # 4. Multi-digit financial / quantity thresholds before 'triệu'
++    def _sub_trieu(m: re.Match) -> str:
++        num_str = m.group(1).strip()
++        val = parse_vi_numeral(num_str)
++        if val is not None and val >= 10:
++            return f"{val} triệu"
++        return m.group(0)
++
++    s = _RE_TRIEU.sub(_sub_trieu, s)
++
++    # 5. Diacritic harmonization
++    s = _RE_HUY.sub("huỷ", s)
++
++    return s
+diff --git a/src/asr/qwen_asr.py b/src/asr/qwen_asr.py
+index 1e93f8c..d02ab3e 100644
+--- a/src/asr/qwen_asr.py
++++ b/src/asr/qwen_asr.py
+@@ -41,6 +41,7 @@ class Qwen3ASREngine:
+         max_new_tokens: int = 256,
+         system_prompt: str = DEFAULT_VI_ASR_SYSTEM_PROMPT,
+         force_vi_prefix: bool = True,
++        enable_itn: bool = True,
+     ):
+         import torch
+         from transformers import AutoModelForSeq2SeqLM, AutoProcessor
+@@ -51,6 +52,7 @@ class Qwen3ASREngine:
+         self.max_new_tokens = max_new_tokens
+         self.system_prompt = system_prompt
+         self.force_vi_prefix = force_vi_prefix
++        self.enable_itn = enable_itn
+         self.processor = AutoProcessor.from_pretrained(adapter_path or model_id)
+         base_model = AutoModelForSeq2SeqLM.from_pretrained(
+             model_id,
+@@ -102,6 +104,10 @@ class Qwen3ASREngine:
+         gen_ids = out_ids[:, prompt_len:] if prompt_len and out_ids.shape[1] > prompt_len else out_ids
+         raw_text = self.processor.batch_decode(gen_ids, skip_special_tokens=True)[0]
+         clean_text = strip_asr_tags(raw_text)
++        if self.enable_itn:
++            from src.asr.itn import inverse_text_normalize
++
++            clean_text = inverse_text_normalize(clean_text)
+         return ASRResult(
+             text=clean_text,
+             raw_text=raw_text,
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index c43a14b..fd4fbe3 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -1,4 +1,4 @@
+-"""Whisper ASR engine supporting Qualcomm PhoASR-whisper-small and OpenAI Whisper models."""
++"""Whisper ASR engine supporting Qualcomm PhoASR-whisper-small, PhoWhisper Large, and OpenAI Whisper models."""
+ from __future__ import annotations
+ 
+ import time
+@@ -8,18 +8,28 @@ from pathlib import Path
+ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
++DEFAULT_WHISPER_PROMPT = (
++    "Trợ lý ảo tiếng Việt hỗ trợ điều khiển nhà thông minh, đặt báo thức, nhắc nhở, lịch, "
++    "danh bạ, gọi điện, nhắn tin SMS, Zalo, email, chuyển khoản ngân hàng, ví điện tử, "
++    "thanh toán hóa đơn, đặt xe, giao đồ ăn, thời tiết, ghi chú, công việc. "
++    "Các tên thường gặp: Minh, Lan, Tuấn, Hương, Sếp Dũng, Bác Ba, Cô giáo Mai, Bố, Mẹ, "
++    "An, Thảo, Huy, Nam, Bình, Phượng."
++)
++
+ 
+ class WhisperASREngine:
+     """Deterministic Whisper ASR engine (greedy decoding, Vietnamese forced language)."""
+ 
+     def __init__(
+         self,
+-        model_id: str = "Qualcomm-AI-Research/PhoASR-whisper-small",
++        model_id: str = "kzap201/phowhisper-large-zaloai",
+         *,
+         device: str = "cuda",
+         dtype: str = "float16",
+         language: str = "vi",
+         task: str = "transcribe",
++        enable_itn: bool = True,
++        initial_prompt: str | None = DEFAULT_WHISPER_PROMPT,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -34,13 +44,35 @@ class WhisperASREngine:
+         self.torch_dtype = torch_dtype
+         self.language = language
+         self.task = task
++        self.enable_itn = enable_itn
++        self.initial_prompt = initial_prompt
++
++        # Attempt standard AutoProcessor with graceful fallback for models with tokenizer quirks
++        # (e.g. kzap201/phowhisper-large-zaloai where AutoProcessor encounters AttributeError: 'list' object has no attribute 'keys')
++        try:
++            self.processor = AutoProcessor.from_pretrained(model_id)
++        except (AttributeError, Exception):
++            from transformers import WhisperFeatureExtractor, WhisperProcessor, WhisperTokenizerFast
++
++            feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-large-v3")
++            tokenizer = WhisperTokenizerFast.from_pretrained(model_id, extra_special_tokens={})
++            self.processor = WhisperProcessor(feature_extractor=feature_extractor, tokenizer=tokenizer)
++
++        try:
++            self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
++                model_id,
++                torch_dtype=torch_dtype,
++                low_cpu_mem_usage=True,
++            ).to(device)
++        except Exception:
++            from transformers import WhisperForConditionalGeneration
++
++            self.model = WhisperForConditionalGeneration.from_pretrained(
++                model_id,
++                torch_dtype=torch_dtype,
++                low_cpu_mem_usage=True,
++            ).to(device)
+ 
+-        self.processor = AutoProcessor.from_pretrained(model_id)
+-        self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
+-            model_id,
+-            torch_dtype=torch_dtype,
+-            low_cpu_mem_usage=True,
+-        ).to(device)
+         self.model.eval()
+ 
+     def transcribe(
+@@ -66,11 +98,19 @@ class WhisperASREngine:
+             "task": self.task,
+             "do_sample": False,
+         }
+-        if extra_context and hasattr(self.processor, "get_prompt_ids"):
++
++        prompt_text = self.initial_prompt
++        if extra_context:
++            prompt_text = f"{prompt_text} {extra_context}".strip() if prompt_text else extra_context
++
++        if prompt_text and hasattr(self.processor, "get_prompt_ids"):
+             try:
+-                p_ids = self.processor.get_prompt_ids(extra_context[:200])
+-                import torch
+-                gen_kwargs["prompt_ids"] = torch.tensor(p_ids, device=self.device)
++                p_ids = self.processor.get_prompt_ids(prompt_text[:250])
++                if not isinstance(p_ids, torch.Tensor):
++                    p_ids = torch.tensor(p_ids, device=self.device)
++                else:
++                    p_ids = p_ids.to(self.device)
++                gen_kwargs["prompt_ids"] = p_ids
+             except Exception:
+                 pass
+ 
+@@ -81,6 +121,11 @@ class WhisperASREngine:
+         clean_text = strip_asr_tags(raw_text)
+         clean_text = unicodedata.normalize("NFC", clean_text).strip()
+ 
++        if self.enable_itn:
++            from src.asr.itn import inverse_text_normalize
++
++            clean_text = inverse_text_normalize(clean_text)
++
+         return ASRResult(
+             text=clean_text,
+             raw_text=raw_text,

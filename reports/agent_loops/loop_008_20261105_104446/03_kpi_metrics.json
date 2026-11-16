@@ -1,0 +1,24 @@
+{
+  "loop": 8,
+  "hypothesis": "Enhanced LifeMate domain entity prompt conditioning with selective tone conflict de-biasing",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.17%, delta EM=-3.34%) or Train regressed",
+  "train": {
+    "wer": 1.27,
+    "cer": 1.06,
+    "sentence_em": 89.33,
+    "latency": 0.5082
+  },
+  "dev": {
+    "wer": 1.78,
+    "cer": 1.18,
+    "sentence_em": 83.95,
+    "latency": 0.4839
+  },
+  "deltas": {
+    "delta_dev_wer": 0.16999999999999993,
+    "delta_dev_cer": 0.10999999999999988,
+    "delta_dev_em": -3.3400000000000034,
+    "delta_train_wer": 0.1100000000000001
+  }
+}

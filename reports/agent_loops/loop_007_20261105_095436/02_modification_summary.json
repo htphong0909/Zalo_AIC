@@ -1,0 +1,10 @@
+{
+  "loop": 7,
+  "timestamp": "2026-11-05T10:27:14.456900",
+  "optimization_summary": "Acoustic 40ms pre-roll padding, domain prompt bleed suppression, and traditional tone harmonization",
+  "diff_stat": "configs/agent_loop_state.json   | 114 +++++++++++++++++++++--\n src/asr/itn.py                  |  21 ++++-\n src/asr/whisper_engine.py       | 202 ++++++++++++++++++++++++++++++++--------\n src/eval/blind_dev_evaluator.py |  23 +++--\n src/eval/train_asr_evaluator.py |  27 ++++--\n 5 files changed, 321 insertions(+), 66 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "73/73 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

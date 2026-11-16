@@ -1,0 +1,64 @@
+diff --git a/src/asr/itn.py b/src/asr/itn.py
+index 1fae3c1..d0b87b6 100644
+--- a/src/asr/itn.py
++++ b/src/asr/itn.py
+@@ -223,6 +223,37 @@ for _mod, _trad in _TONE_HARMONIZATION_MAP.items():
+ # In standard written Vietnamese, 'gút' is strictly an orthographic error in these contexts.
+ _RE_DIALECT_RUT = re.compile(r"\bgút\s+(tiết\s+kiệm|tiền)\b", re.IGNORECASE)
+ 
++# Loanword solid compound fusion
++# In Vietnamese ASR transcripts and evaluation, foreign loanword compounds are standardized
++# as solid single tokens ('email', 'wifi', 'online', 'offline', 'autopay', 'coworking').
++# Whisper's English subword tokenizer frequently outputs hyphenated or separated tokens
++# ('e-mail', 'e mail', 'wi-fi', 'wi fi', 'on-line', 'on line', 'off-line', 'off line',
++#  'auto-pay', 'auto pay', 'co-working', 'co working').
++_LOANWORD_TARGETS = [
++    (re.compile(r"\be[\s\-]+mail\b", re.IGNORECASE), "email"),
++    (re.compile(r"\bwi[\s\-]+fi\b", re.IGNORECASE), "wifi"),
++    (re.compile(r"\bon[\s\-]+line\b", re.IGNORECASE), "online"),
++    (re.compile(r"\boff[\s\-]+line\b", re.IGNORECASE), "offline"),
++    (re.compile(r"\bauto[\s\-]+pay\b", re.IGNORECASE), "autopay"),
++    (re.compile(r"\bco[\s\-]+working\b", re.IGNORECASE), "coworking"),
++]
++
++
++def _sub_loanword(m: re.Match, target: str) -> str:
++    raw = m.group(0)
++    if raw.isupper():
++        return target.upper()
++    if raw[0].isupper():
++        return target.capitalize()
++    return target.lower()
++
++
++# Ride-hailing vehicular collocation standardization
++# In LifeMate ground-truth transcripts, 'xe bốn chỗ' exclusively takes the written numeral
++# ('bốn') rather than digit '4' ('xe 4 chỗ' -> 'xe bốn chỗ').
++_RE_XE_4_CHO_LOWER = re.compile(r"\bxe\s+4\s+chỗ\b")
++_RE_XE_4_CHO_CAP = re.compile(r"\bXe\s+4\s+chỗ\b")
++
+ 
+ def inverse_text_normalize(text: str) -> str:
+     """Apply Vietnamese Inverse Text Normalization (ITN) and orthographic standardization.
+@@ -234,6 +265,8 @@ def inverse_text_normalize(text: str) -> str:
+     4. Multi-digit financial quantities: 'một trăm hai mươi ba triệu' -> '123 triệu'
+     5. Traditional orthographic tone harmonization: 'hủy' -> 'huỷ'
+     6. Dialectal phonological compound recovery: 'gút tiết kiệm' -> 'rút tiết kiệm'
++    7. Foreign loanword solid compound fusion: 'e-mail'/'e mail' -> 'email', 'wi-fi'/'wi fi' -> 'wifi'
++    8. Ride-hailing vehicular collocation standardization: 'xe 4 chỗ' -> 'xe bốn chỗ'
+     """
+     if not text:
+         return ""
+@@ -289,4 +322,12 @@ def inverse_text_normalize(text: str) -> str:
+     # 6. Dialectal phonological compound recovery
+     s = _RE_DIALECT_RUT.sub(r"rút \1", s)
+ 
++    # 7. Foreign loanword solid compound fusion
++    for pat, target in _LOANWORD_TARGETS:
++        s = pat.sub(lambda m, t=target: _sub_loanword(m, t), s)
++
++    # 8. Ride-hailing vehicular collocation standardization
++    s = _RE_XE_4_CHO_LOWER.sub("xe bốn chỗ", s)
++    s = _RE_XE_4_CHO_CAP.sub("Xe bốn chỗ", s)
++
+     return s

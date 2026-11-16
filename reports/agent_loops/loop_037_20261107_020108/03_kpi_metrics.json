@@ -1,0 +1,24 @@
+{
+  "loop": 37,
+  "hypothesis": "Domain Prompt Harmonization: Disambiguate conditional onset priors ('Nếu' vs 'Điều') and colloquial discourse markers",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.01%, delta EM=-0.34%) or Train regressed",
+  "train": {
+    "wer": 1.0,
+    "cer": 0.83,
+    "sentence_em": 92.0,
+    "latency": 0.3688
+  },
+  "dev": {
+    "wer": 1.52,
+    "cer": 1.05,
+    "sentence_em": 87.29,
+    "latency": 0.3547
+  },
+  "deltas": {
+    "delta_dev_wer": 0.010000000000000009,
+    "delta_dev_cer": -0.020000000000000018,
+    "delta_dev_em": -0.3399999999999892,
+    "delta_train_wer": 0.010000000000000009
+  }
+}

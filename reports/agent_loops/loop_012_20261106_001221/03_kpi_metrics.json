@@ -1,0 +1,24 @@
+{
+  "loop": 12,
+  "hypothesis": "Linear peak amplitude normalization to 0.95 combined with conversational vocative prompt de-biasing",
+  "decision": "ACCEPTED",
+  "reason": "Dev WER improved (-0.03%) or EM improved (+0.33%) without train collapse",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.88,
+    "sentence_em": 92.0,
+    "latency": 0.4772
+  },
+  "dev": {
+    "wer": 1.57,
+    "cer": 1.09,
+    "sentence_em": 87.29,
+    "latency": 0.4533
+  },
+  "deltas": {
+    "delta_dev_wer": -0.030000000000000027,
+    "delta_dev_cer": 0.010000000000000009,
+    "delta_dev_em": 0.3300000000000125,
+    "delta_train_wer": -0.1499999999999999
+  }
+}

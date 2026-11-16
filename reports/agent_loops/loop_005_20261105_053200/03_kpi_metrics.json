@@ -1,0 +1,24 @@
+{
+  "loop": 5,
+  "hypothesis": "Constrained beam search decoding (num_beams=2) with repetition penalty (1.1) and enhanced domain prompt biasing",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.42%, delta EM=-6.36%) or Train regressed",
+  "train": {
+    "wer": 1.72,
+    "cer": 1.5,
+    "sentence_em": 82.67,
+    "latency": 1.8058
+  },
+  "dev": {
+    "wer": 2.16,
+    "cer": 1.63,
+    "sentence_em": 79.26,
+    "latency": 1.7347
+  },
+  "deltas": {
+    "delta_dev_wer": 0.42000000000000015,
+    "delta_dev_cer": 0.42999999999999994,
+    "delta_dev_em": -6.359999999999999,
+    "delta_train_wer": 0.28
+  }
+}

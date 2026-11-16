@@ -1,0 +1,115 @@
+name: Build Submission Docker (67Cat)
+
+'on':
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - submission-67cat
+    paths:
+      - 'submission/**'
+      - '.github/workflows/build_submission_docker.yml'
+
+jobs:
+  build-and-release:
+    name: Build & Package Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Clean Runner Disk Space (~60 GB free SSD)
+        run: |
+          echo "=== Disk space before cleanup ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
+          echo "=== Disk space after cleanup ==="
+          df -h
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Build Prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pigz
+          pip install --no-cache-dir huggingface_hub
+
+      - name: Download Fine-Tuned Offline Models (Public HF Repo)
+        run: |
+          cd submission/qwen35_4b_sft_v2_e2e
+          python3 prepare_models.py --saved-dir saved_models
+          echo "=== Downloaded models ==="
+          ls -lh saved_models/
+          du -sh saved_models/*
+
+      - name: Build Docker Image zac2026:67cat
+        run: |
+          cd submission/qwen35_4b_sft_v2_e2e
+          docker build --network=host -t zac2026:67cat .
+          echo "=== Docker Images ==="
+          docker images
+
+      - name: Free Temporary Host Model Cache Before Compression
+        run: |
+          # Delete host saved_models copy since it's already copied into Docker image layers
+          rm -rf submission/qwen35_4b_sft_v2_e2e/saved_models
+          echo "=== Free space before docker save ==="
+          df -h
+
+      - name: Save & Compress Docker Image (pigz parallel)
+        run: |
+          echo "Exporting zac2026:67cat to zac2026_67Cat.tar.gz ..."
+          docker save zac2026:67cat | pigz -p 4 > zac2026_67Cat.tar.gz
+          ls -lh zac2026_67Cat.tar.gz
+
+      - name: Prune Docker Image From Daemon
+        run: |
+          docker rmi zac2026:67cat || true
+          docker system prune -af || true
+          echo "=== Free space after docker prune ==="
+          df -h
+
+      - name: Compute MD5 Checksum
+        run: |
+          md5sum zac2026_67Cat.tar.gz | tee zac2026_67Cat.tar.gz.md5
+
+      - name: Split Tarball into Chunks for GitHub Release (< 2GB per asset)
+        run: |
+          mkdir -p release_assets
+          cp zac2026_67Cat.tar.gz.md5 release_assets/
+          split -b 1800M zac2026_67Cat.tar.gz release_assets/zac2026_67Cat.tar.gz.part_
+          rm -f zac2026_67Cat.tar.gz
+          echo "=== Release Assets Ready for Upload ==="
+          ls -lh release_assets/
+
+      - name: Create GitHub Release & Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0-submission
+          name: ZAC 2026 Final Submission (Team 67Cat)
+          body: |
+            ### Zalo AI Challenge 2026 — Final Submission Package
+            - **Team Name:** `67Cat`
+            - **Archive Name:** `zac2026_67Cat.tar.gz`
+            - **MD5 Checksum:** See `zac2026_67Cat.tar.gz.md5`
+            - **Base Image:** `nvidia/cuda:13.2.0-devel-ubuntu22.04`
+            - **Models:**
+              - LLM: `Qwen/Qwen3.5-4B` SFT V2 Merged (`4.2058B` params)
+              - ASR: `kzap201/phowhisper-large-zaloai` (`0.7446B` params)
+              - Total System: `4.95B` params (< 6.0B limit)
+            - **Reassembly Command:**
+              ```bash
+              cat zac2026_67Cat.tar.gz.part_* > zac2026_67Cat.tar.gz
+              md5sum -c zac2026_67Cat.tar.gz.md5
+              ```
+          files: release_assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

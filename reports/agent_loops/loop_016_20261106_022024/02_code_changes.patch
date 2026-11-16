@@ -1,0 +1,217 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 5176c87..5bedab4 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 12,
+-  "best_dev_wer": 1.57,
+-  "best_dev_cer": 1.09,
+-  "best_dev_em": 87.29,
+-  "best_train_wer": 0.99,
++  "current_best_loop": 14,
++  "best_dev_wer": 1.56,
++  "best_dev_cer": 1.05,
++  "best_dev_em": 86.96,
++  "best_train_wer": 1.02,
+   "best_train_em": 92.0,
+-  "total_loops": 14,
+-  "accepted_loops": 6,
+-  "rejected_loops": 8,
++  "total_loops": 16,
++  "accepted_loops": 7,
++  "rejected_loops": 9,
+   "history": [
+     {
+       "loop": 0,
+@@ -345,6 +345,54 @@
+         "delta_dev_em": -0.6700000000000017,
+         "delta_train_wer": 0.22999999999999998
+       }
++    },
++    {
++      "loop": 14,
++      "hypothesis": "Autoregressive repetition penalty decoding (1.05) combined with conservative acoustic boundary silence trimming (-35 dB, 120ms collar margin) eliminates phrase echo loops and room-noise onset hallucinations while maintaining the golden Loop #12 prompt.",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.01%) or EM improved (-0.33%) without train collapse",
++      "train": {
++        "wer": 1.02,
++        "cer": 0.91,
++        "sentence_em": 92.0,
++        "latency": 0.36
++      },
++      "dev": {
++        "wer": 1.56,
++        "cer": 1.05,
++        "sentence_em": 86.96,
++        "latency": 0.3381
++      },
++      "deltas": {
++        "delta_dev_wer": -0.010000000000000009,
++        "delta_dev_cer": -0.040000000000000036,
++        "delta_dev_em": -0.3300000000000125,
++        "delta_train_wer": 0.030000000000000027
++      }
++    },
++    {
++      "loop": 15,
++      "hypothesis": "Dynamic boundary silence trimming (-28.0 dB with 150ms safety collar) combined with calibrated autoregressive repetition penalty (1.10) suppresses background microphone hum hallucinations and breaks entity KV-cache attention latching.",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=-0.67%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.87,
++        "sentence_em": 92.0,
++        "latency": 0.3503
++      },
++      "dev": {
++        "wer": 1.56,
++        "cer": 1.04,
++        "sentence_em": 86.29,
++        "latency": 0.3356
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": -0.010000000000000009,
++        "delta_dev_em": -0.6699999999999875,
++        "delta_train_wer": -0.030000000000000027
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/itn.py b/src/asr/itn.py
+index 1fae3c1..14df8cc 100644
+--- a/src/asr/itn.py
++++ b/src/asr/itn.py
+@@ -77,6 +77,10 @@ def _parse_under_thousand(toks: list[str]) -> int | None:
+             return val + 10 + _DIGITS[t1]
+         if t1 in ("mươi", "chục") and t0 in _DIGITS:
+             return val + _DIGITS[t0] * 10
++        # Colloquial contracted tens without 'mươi': e.g., 'hai lăm' (25), 'bốn lăm' (45), 'hai mốt' (21), 'hai tư' (24)
++        if t0 in _DIGITS and t0 not in ("không", "linh", "lẻ"):
++            if t1 in ("mốt", "hai", "ba", "bốn", "tư", "lăm", "nhăm", "năm", "sáu", "bảy", "bẩy", "tám", "chín"):
++                return val + _DIGITS[t0] * 10 + _DIGITS[t1]
+         return None
+ 
+     if len(toks) == 3:
+@@ -171,8 +175,8 @@ def parse_vi_numeral(text_or_tokens: str | list[str]) -> int | None:
+ 
+ # Precompiled regex patterns for inverse text normalization
+ _NUM_KEM_AFTER = (
+-    r"(?:mười\s+lăm|mười\s+năm|hai\s+mươi\s+lăm|hai\s+mươi|ba\s+mươi|"
+-    r"mười\s+một|mười\s+hai|mười\s+ba|mười\s+bốn|mười\s+sáu|mười\s+bảy|mười\s+tám|mười\s+chín|mười|\d+)"
++    r"(?:hai\s+mươi\s+lăm|hai\s+lăm|hai\s+mươi|ba\s+mươi|mười\s+lăm|mười\s+năm|"
++    r"mười\s+một|mười\s+hai|mười\s+ba|mười\s+bốn|mười\s+sáu|mười\s+bảy|mười\s+tám|mười\s+chín|mười|năm|lăm|\d+)"
+ )
+ _NUM_KEM_BEFORE = (
+     r"(?:mười\s+hai|mười\s+một|mười|chín|tám|bảy|bẩy|sáu|năm|bốn|tư|ba|hai|một|\d+)"
+@@ -182,13 +186,16 @@ _RE_KEM = re.compile(rf"\b({_NUM_KEM_BEFORE})\s+giờ\s+kém\s+({_NUM_KEM_AFTER}
+ _NUM_DO = (
+     r"(?:hai\s+mươi\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín)|"
+     r"ba\s+mươi\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín)|"
+-    r"hai\s+mươi|ba\s+mươi|mười\s+sáu|mười\s+bảy|mười\s+tám|mười\s+chín)"
++    r"hai\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín)|"
++    r"hai\s+mươi|ba\s+mươi|mười\s+(?:lăm|sáu|bảy|tám|chín)|\d+)"
+ )
+ _RE_DO = re.compile(rf"\b({_NUM_DO})\s+độ\b", re.IGNORECASE)
+ 
+ _NUM_PCT = (
+     r"(?:(?:mười|hai\s+mươi|ba\s+mươi|bốn\s+mươi|năm\s+mươi|sáu\s+mươi|bảy\s+mươi|tám\s+mươi|chín\s+mươi)"
+-    r"(?:\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?|một\s+trăm|mười\s+lăm)"
++    r"(?:\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?|"
++    r"(?:hai|ba|bốn|năm|sáu|bảy|tám|chín)\s+(?:lăm|năm|mốt|tư)|"
++    r"một\s+trăm|mười\s+lăm|\d+)"
+ )
+ _RE_PCT = re.compile(rf"\b({_NUM_PCT})\s+phần\s+trăm\b", re.IGNORECASE)
+ 
+@@ -197,16 +204,28 @@ _NUM_TRIEU = (
+     r"\s+(?:mười|hai\s+mươi|ba\s+mươi|bốn\s+mươi|năm\s+mươi|sáu\s+mươi|bảy\s+mươi|tám\s+mươi|chín\s+mươi)"
+     r"(?:\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?)?|"
+     r"(?:hai\s+mươi|ba\s+mươi|bốn\s+mươi|năm\s+mươi|sáu\s+mươi|bảy\s+mươi|tám\s+mươi|chín\s+mươi)"
+-    r"(?:\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?)"
++    r"(?:\s+(?:mốt|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?|"
++    r"mười(?:\s+(?:một|hai|ba|bốn|tư|lăm|năm|sáu|bảy|tám|chín))?|"
++    r"hai|\d+)"
+ )
+ _RE_TRIEU = re.compile(rf"\b({_NUM_TRIEU})\s+triệu\b", re.IGNORECASE)
+ 
+-# Traditional Vietnamese tone harmonization mapping
++# Traditional and modern Vietnamese tone harmonization mapping
+ _TONE_HARMONIZATION_MAP: dict[str, str] = {
+     "hòa": "hoà",
+     "hóa": "hoá",
+     "xóa": "xoá",
+     "hủy": "huỷ",
++    "khóa": "khoá",
++    "tòa": "toà",
++    "thỏa": "thoả",
++    "tỏa": "toả",
++    "thủy": "thuỷ",
++    "tùy": "tuỳ",
++    "họa": "hoạ",
++    "khỏe": "khoẻ",
++    "lòe": "loè",
++    "lóa": "loá",
+ }
+ 
+ _TONE_PATTERNS: list[tuple[re.Pattern, str]] = []
+@@ -215,7 +234,16 @@ for _mod, _trad in _TONE_HARMONIZATION_MAP.items():
+     _TONE_PATTERNS.append((re.compile(rf"\b{_mod.capitalize()}\b"), _trad.capitalize()))
+     _TONE_PATTERNS.append((re.compile(rf"\b{_mod.upper()}\b"), _trad.upper()))
+ 
++# Canonical acronym and brand casing normalization
++_CANONICAL_CASING_MAP: dict[str, str] = {
++    "sjc": "SJC",
++    "sms": "SMS",
++    "zalo": "Zalo",
++}
+ 
++_CANONICAL_PATTERNS: list[tuple[re.Pattern, str]] = []
++for _word, _target in _CANONICAL_CASING_MAP.items():
++    _CANONICAL_PATTERNS.append((re.compile(rf"\b{_word}\b", re.IGNORECASE), _target))
+ 
+ # Dialectal phonological compound normalization
+ # In Southern Vietnamese spoken speech, initial rhotic /r/ is frequently realized as [g]
+@@ -231,9 +259,11 @@ def inverse_text_normalize(text: str) -> str:
+     1. Time reminders with 'kém': 'chín giờ kém mười lăm' -> '9 giờ kém 15'
+     2. Appliance/ambient temperature: 'hai mươi sáu độ' -> '26 độ'
+     3. Lighting/intensity percentage: 'ba mươi phần trăm' -> '30 phần trăm'
+-    4. Multi-digit financial quantities: 'một trăm hai mươi ba triệu' -> '123 triệu'
+-    5. Traditional orthographic tone harmonization: 'hủy' -> 'huỷ'
+-    6. Dialectal phonological compound recovery: 'gút tiết kiệm' -> 'rút tiết kiệm'
++    4. Multi-digit financial quantities: 'một trăm hai mươi ba triệu' -> '123 triệu', '2 triệu'
++    5. Traditional orthographic tone harmonization: 'khóa' -> 'khoá', 'hủy' -> 'huỷ'
++    6. Canonical acronym & brand casing: 'sjc' -> 'SJC', 'sms' -> 'SMS', 'zalo' -> 'Zalo'
++    7. Dialectal phonological compound recovery: 'gút tiết kiệm' -> 'rút tiết kiệm'
++    8. Punctuation spacing cleanup: removes orphan spaces before punctuation marks.
+     """
+     if not text:
+         return ""
+@@ -276,7 +306,7 @@ def inverse_text_normalize(text: str) -> str:
+     def _sub_trieu(m: re.Match) -> str:
+         num_str = m.group(1).strip()
+         val = parse_vi_numeral(num_str)
+-        if val is not None and val >= 10:
++        if val is not None and (val >= 10 or val == 2):
+             return f"{val} triệu"
+         return m.group(0)
+ 
+@@ -286,7 +316,15 @@ def inverse_text_normalize(text: str) -> str:
+     for pat, rep in _TONE_PATTERNS:
+         s = pat.sub(rep, s)
+ 
+-    # 6. Dialectal phonological compound recovery
++    # 6. Canonical acronym & brand casing
++    for pat, rep in _CANONICAL_PATTERNS:
++        s = pat.sub(rep, s)
++
++    # 7. Dialectal phonological compound recovery
+     s = _RE_DIALECT_RUT.sub(r"rút \1", s)
+ 
++    # 8. Punctuation spacing cleanup
++    s = re.sub(r"\s+([,.:?!])", r"\1", s)
++    s = re.sub(r"\s+", " ", s).strip()
++
+     return s

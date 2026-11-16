@@ -1,0 +1,8 @@
+{
+  "loop": 1,
+  "hypothesis": "LoRA SFT (r=16, alpha=32) on duclvQ/qwen3-asr-1.7b-vimd-full with LifeMate train audio (4042 clips)",
+  "start_time": "2026-11-05T00:49:01.685339",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "main-orchestrator"
+}

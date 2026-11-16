@@ -1,0 +1,8 @@
+{
+  "loop": 42,
+  "hypothesis": "CTC Phonetic Anchor Rescoring (PYG-ASR Interspeech 2025): Leverage non-hallucinatory CTC frame alignment to veto and recover swallowed/distorted phonetic tokens",
+  "start_time": "2026-11-07T10:00:53.823046",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "loop-researcher"
+}

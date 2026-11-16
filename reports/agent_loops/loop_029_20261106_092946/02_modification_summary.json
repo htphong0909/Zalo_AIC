@@ -1,0 +1,10 @@
+{
+  "loop": 29,
+  "timestamp": "2026-11-06T09:36:01.762650",
+  "optimization_summary": "Symmetric 80ms collar padding (4 encoder frames >= 65ms Conv1D RF) + modular preprocess_waveform",
+  "diff_stat": "src/asr/whisper_engine.py | 169 ++++++++++++++++++++++++++++++----------------\n 1 file changed, 109 insertions(+), 60 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "68/68 passed",
+  "audit_passed": true,
+  "audit_notes": "Clean signal-level 80ms integer frame collar, zero dev leak, size budget ok"
+}

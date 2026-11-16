@@ -1,0 +1,162 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 671801e..36f5c1c 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 3,
+-  "best_dev_wer": 1.74,
+-  "best_dev_cer": 1.2,
+-  "best_dev_em": 85.62,
+-  "best_train_wer": 1.44,
+-  "best_train_em": 88.67,
+-  "total_loops": 7,
+-  "accepted_loops": 3,
+-  "rejected_loops": 4,
++  "current_best_loop": 7,
++  "best_dev_wer": 1.61,
++  "best_dev_cer": 1.07,
++  "best_dev_em": 87.29,
++  "best_train_wer": 1.16,
++  "best_train_em": 90.67,
++  "total_loops": 9,
++  "accepted_loops": 4,
++  "rejected_loops": 5,
+   "history": [
+     {
+       "loop": 0,
+@@ -177,6 +177,54 @@
+         "delta_dev_em": -6.359999999999999,
+         "delta_train_wer": 0.28
+       }
++    },
++    {
++      "loop": 7,
++      "hypothesis": "Acoustic 40ms pre-roll padding, domain prompt bleed suppression, and traditional tone harmonization",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.13%) or EM improved (+1.67%) without train collapse",
++      "train": {
++        "wer": 1.16,
++        "cer": 0.97,
++        "sentence_em": 90.67,
++        "latency": 0.4596
++      },
++      "dev": {
++        "wer": 1.61,
++        "cer": 1.07,
++        "sentence_em": 87.29,
++        "latency": 0.4639
++      },
++      "deltas": {
++        "delta_dev_wer": -0.1299999999999999,
++        "delta_dev_cer": -0.1299999999999999,
++        "delta_dev_em": 1.6700000000000017,
++        "delta_train_wer": -0.28
++      }
++    },
++    {
++      "loop": 8,
++      "hypothesis": "Enhanced LifeMate domain entity prompt conditioning with selective tone conflict de-biasing",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.17%, delta EM=-3.34%) or Train regressed",
++      "train": {
++        "wer": 1.27,
++        "cer": 1.06,
++        "sentence_em": 89.33,
++        "latency": 0.5082
++      },
++      "dev": {
++        "wer": 1.78,
++        "cer": 1.18,
++        "sentence_em": 83.95,
++        "latency": 0.4839
++      },
++      "deltas": {
++        "delta_dev_wer": 0.16999999999999993,
++        "delta_dev_cer": 0.10999999999999988,
++        "delta_dev_em": -3.3400000000000034,
++        "delta_train_wer": 0.1100000000000001
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 247cd52..ce1d2b9 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -43,6 +43,8 @@ class WhisperASREngine:
+         self,
+         model_id: str = "kzap201/phowhisper-large-zaloai",
+         *,
++        adapter_id: str | Path | None = None,
++        merge_adapter: bool = True,
+         device: str = "cuda",
+         dtype: str = "float16",
+         language: str = "vi",
+@@ -61,6 +63,8 @@ class WhisperASREngine:
+             torch_dtype = torch.float32
+ 
+         self.model_id = model_id
++        self.adapter_id = str(adapter_id) if adapter_id is not None else None
++        self.merge_adapter = merge_adapter
+         self.device = device
+         self.torch_dtype = torch_dtype
+         self.language = language
+@@ -116,6 +120,13 @@ class WhisperASREngine:
+                     **model_kwargs,
+                 ).to(device)
+ 
++        if self.adapter_id:
++            from peft import PeftModel
++
++            self.model = PeftModel.from_pretrained(self.model, self.adapter_id)
++            if self.merge_adapter and hasattr(self.model, "merge_and_unload"):
++                self.model = self.model.merge_and_unload()
++
+         self.model.eval()
+ 
+     def _pad_waveform(self, waveform: np.ndarray, sr: int = 16000) -> np.ndarray:
+diff --git a/src/eval/blind_dev_evaluator.py b/src/eval/blind_dev_evaluator.py
+index 71a840f..c02e8ec 100644
+--- a/src/eval/blind_dev_evaluator.py
++++ b/src/eval/blind_dev_evaluator.py
+@@ -114,6 +114,7 @@ def run_sealed_blind_dev_evaluation(
+ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description="Run Sealed Blind Box Dev ASR Evaluation")
+     parser.add_argument("--model-id", type=str, default="kzap201/phowhisper-large-zaloai")
++    parser.add_argument("--adapter-id", type=str, default=None)
+     parser.add_argument("--engine", type=str, default="whisper", choices=["whisper", "chunkformer"])
+     parser.add_argument("--batch-size", type=int, default=8)
+     parser.add_argument("--output", type=str, default="scripts/scratch/temp_golden_res.json")
+@@ -121,7 +122,7 @@ if __name__ == "__main__":
+ 
+     if args.engine == "whisper":
+         from src.asr.whisper_engine import WhisperASREngine
+-        engine = WhisperASREngine(model_id=args.model_id)
++        engine = WhisperASREngine(model_id=args.model_id, adapter_id=args.adapter_id)
+     else:
+         from src.asr.chunkformer_engine import ChunkFormerASREngine
+         engine = ChunkFormerASREngine()
+diff --git a/src/eval/train_asr_evaluator.py b/src/eval/train_asr_evaluator.py
+index 279b74c..6f5773a 100644
+--- a/src/eval/train_asr_evaluator.py
++++ b/src/eval/train_asr_evaluator.py
+@@ -118,6 +118,7 @@ def run_train_evaluation(
+ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description="Run Glass-Box Train ASR Evaluation")
+     parser.add_argument("--model-id", type=str, default="kzap201/phowhisper-large-zaloai")
++    parser.add_argument("--adapter-id", type=str, default=None)
+     parser.add_argument("--engine", type=str, default="whisper", choices=["whisper", "chunkformer"])
+     parser.add_argument("--max-samples", type=int, default=150)
+     parser.add_argument("--batch-size", type=int, default=8)
+@@ -126,7 +127,7 @@ if __name__ == "__main__":
+ 
+     if args.engine == "whisper":
+         from src.asr.whisper_engine import WhisperASREngine
+-        engine = WhisperASREngine(model_id=args.model_id)
++        engine = WhisperASREngine(model_id=args.model_id, adapter_id=args.adapter_id)
+     else:
+         from src.asr.chunkformer_engine import ChunkFormerASREngine
+         engine = ChunkFormerASREngine()

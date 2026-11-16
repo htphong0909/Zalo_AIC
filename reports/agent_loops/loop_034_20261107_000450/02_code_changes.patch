@@ -1,0 +1,551 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 2787361..e1b6ec1 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -6,9 +6,9 @@
+   "best_dev_em": 87.63,
+   "best_train_wer": 0.99,
+   "best_train_em": 92.0,
+-  "total_loops": 33,
++  "total_loops": 35,
+   "accepted_loops": 10,
+-  "rejected_loops": 23,
++  "rejected_loops": 25,
+   "history": [
+     {
+       "loop": 0,
+@@ -801,6 +801,54 @@
+         "delta_dev_em": 0.3399999999999892,
+         "delta_train_wer": 0.0
+       }
++    },
++    {
++      "loop": 33,
++      "hypothesis": "Dynamic Sequence Alignment CTC anchor verification (PYG-ASR SOTA) with automatic ChunkFormer anchor initialization",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.3647
++      },
++      "dev": {
++        "wer": 1.51,
++        "cer": 1.07,
++        "sentence_em": 87.63,
++        "latency": 0.3531
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 33,
++      "hypothesis": "Dynamic Sequence Alignment CTC anchor verification (PYG-ASR SOTA) with automatic ChunkFormer anchor initialization",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.37
++      },
++      "dev": {
++        "wer": 1.51,
++        "cer": 1.07,
++        "sentence_em": 87.63,
++        "latency": 0.3513
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/chunkformer_engine.py b/src/asr/chunkformer_engine.py
+index 83d2eee..8fc4aff 100644
+--- a/src/asr/chunkformer_engine.py
++++ b/src/asr/chunkformer_engine.py
+@@ -1,13 +1,37 @@
+ """ChunkFormer CTC ASR engine supporting khanhld/chunkformer-ctc-large-vie."""
+ from __future__ import annotations
+ 
++import re
+ import time
+ import unicodedata
+ from pathlib import Path
++from typing import Any
+ 
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
+ 
++def _sanitize_chunkformer_hyp(raw_text: str, enable_itn: bool = True) -> str:
++    """Sanitizes raw ChunkFormer hypothesis by stripping tags and applying ITN."""
++    clean_text = strip_asr_tags(raw_text)
++    clean_text = unicodedata.normalize("NFC", clean_text).strip()
++
++    clean_text = re.sub(r"\s+([,.:?!])", r"\1", clean_text)
++    clean_text = re.sub(r"\s+", " ", clean_text).strip()
++
++    if clean_text and clean_text[0].islower():
++        clean_text = clean_text[0].upper() + clean_text[1:]
++
++    if enable_itn:
++        try:
++            from src.asr.itn import inverse_text_normalize
++
++            clean_text = inverse_text_normalize(clean_text)
++        except Exception:
++            pass
++
++    return clean_text
++
++
+ class ChunkFormerASREngine:
+     """Fast, lightweight CTC ASR engine based on Masked Chunking Conformer."""
+ 
+@@ -15,20 +39,26 @@ class ChunkFormerASREngine:
+         self,
+         model_id: str = "khanhld/chunkformer-ctc-large-vie",
+         *,
++        model: Any | None = None,
+         device: str = "cuda",
+         chunk_size: int = 64,
+         left_context_size: int = 128,
+         right_context_size: int = 128,
++        enable_itn: bool = True,
+     ):
+-        from chunkformer import ChunkFormerModel
+-
+         self.model_id = model_id
+         self.device = device
+         self.chunk_size = chunk_size
+         self.left_context_size = left_context_size
+         self.right_context_size = right_context_size
++        self.enable_itn = enable_itn
+ 
+-        self.model = ChunkFormerModel.from_pretrained(model_id)
++        if model is not None:
++            self.model = model
++        else:
++            from chunkformer import ChunkFormerModel
++
++            self.model = ChunkFormerModel.from_pretrained(model_id)
+ 
+     def transcribe(
+         self,
+@@ -56,8 +86,8 @@ class ChunkFormerASREngine:
+             raw_text = str(raw_res.get("text", ""))
+         else:
+             raw_text = str(raw_res)
+-        clean_text = strip_asr_tags(raw_text)
+-        clean_text = unicodedata.normalize("NFC", clean_text).strip()
++
++        clean_text = _sanitize_chunkformer_hyp(raw_text, enable_itn=self.enable_itn)
+ 
+         return ASRResult(
+             text=clean_text,
+@@ -65,35 +95,48 @@ class ChunkFormerASREngine:
+             latency_s=time.perf_counter() - t0,
+         )
+ 
+-    def batch_transcribe(
++    def transcribe_batch(
+         self,
+         audio_paths: list[str | Path],
++        *,
++        batch_size: int = 8,
++        extra_contexts: list[str | None] | None = None,
+     ) -> list[ASRResult]:
+-        t0 = time.perf_counter()
++        """Transcribes a batch of audio paths in chunks of batch_size."""
+         paths_str = [str(p) for p in audio_paths]
+-        raw_results = self.model.batch_decode(
+-            audio_paths=paths_str,
+-            chunk_size=self.chunk_size,
+-            left_context_size=self.left_context_size,
+-            right_context_size=self.right_context_size,
+-        )
+-        total_time = time.perf_counter() - t0
+-        avg_time = total_time / max(1, len(paths_str))
+-
+-        results = []
+-        for raw_res in raw_results:
+-            if isinstance(raw_res, str):
+-                raw_text = raw_res
+-            elif isinstance(raw_res, list):
+-                raw_text = " ".join(
+-                    item if isinstance(item, str) else str(item.get("text", ""))
+-                    for item in raw_res
++        if not paths_str:
++            return []
++
++        results: list[ASRResult] = []
++        for i in range(0, len(paths_str), batch_size):
++            chunk = paths_str[i : i + batch_size]
++            t_chunk0 = time.perf_counter()
++            try:
++                raw_results = self.model.batch_decode(
++                    audio_paths=chunk,
++                    chunk_size=self.chunk_size,
++                    left_context_size=self.left_context_size,
++                    right_context_size=self.right_context_size,
+                 )
+-            elif isinstance(raw_res, dict):
+-                raw_text = str(raw_res.get("text", ""))
+-            else:
+-                raw_text = str(raw_res)
+-            clean_text = strip_asr_tags(raw_text)
+-            clean_text = unicodedata.normalize("NFC", clean_text).strip()
+-            results.append(ASRResult(text=clean_text, raw_text=raw_text, latency_s=avg_time))
++            except Exception:
++                raw_results = [""] * len(chunk)
++            chunk_lat = (time.perf_counter() - t_chunk0) / max(1, len(chunk))
++
++            for raw_res in raw_results:
++                if isinstance(raw_res, str):
++                    raw_text = raw_res
++                elif isinstance(raw_res, list):
++                    raw_text = " ".join(
++                        item if isinstance(item, str) else str(item.get("text", ""))
++                        for item in raw_res
++                    )
++                elif isinstance(raw_res, dict):
++                    raw_text = str(raw_res.get("text", ""))
++                else:
++                    raw_text = str(raw_res)
++                clean_text = _sanitize_chunkformer_hyp(raw_text, enable_itn=self.enable_itn)
++                results.append(ASRResult(text=clean_text, raw_text=raw_text, latency_s=chunk_lat))
+         return results
++
++    # Alias for backward compatibility
++    batch_transcribe = transcribe_batch
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 841bdb0..f8cb1e4 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -4,7 +4,9 @@ from __future__ import annotations
+ import re
+ import time
+ import unicodedata
++from difflib import SequenceMatcher
+ from pathlib import Path
++from typing import Any
+ 
+ import numpy as np
+ 
+@@ -17,6 +19,227 @@ DEFAULT_WHISPER_PROMPT = (
+     "Dạ, vâng, trợ lý ơi, em ơi, anh ơi, chị ơi."
+ )
+ 
++VI_PARTICLES = {
++    "nhé", "nha", "hen", "ạ", "đi", "cơ", "mà", "thôi", "thay", "nhá", "nè", "nghe"
++}
++
++DOMAIN_ENTITIES = {
++    "zalo", "zalopay", "momo", "shopee", "grab", "be", "sms", "sjc",
++    "vietcombank", "techcombank", "mbbank", "bidv", "agribank", "vpbank",
++    "tpbank", "vib", "acb", "facebook", "google", "youtube", "tiktok", "gmail"
++}
++
++
++def _strip_diacritics(s: str) -> str:
++    decomposed = unicodedata.normalize("NFD", s)
++    stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
++    return stripped.replace("đ", "d").replace("Đ", "D")
++
++
++def _levenshtein_distance(s1: str, s2: str) -> int:
++    if s1 == s2:
++        return 0
++    if not s1:
++        return len(s2)
++    if not s2:
++        return len(s1)
++    dp = list(range(len(s2) + 1))
++    for i, c1 in enumerate(s1):
++        new_dp = [i + 1] * (len(s2) + 1)
++        for j, c2 in enumerate(s2):
++            cost = 0 if c1 == c2 else 1
++            new_dp[j + 1] = min(dp[j + 1] + 1, new_dp[j] + 1, dp[j] + cost)
++        dp = new_dp
++    return dp[-1]
++
++
++def _phonetic_distance(w1: str, w2: str) -> int:
++    d_raw = _levenshtein_distance(w1, w2)
++    d_base = _levenshtein_distance(_strip_diacritics(w1), _strip_diacritics(w2))
++    return min(d_raw, d_base)
++
++
++def _normalize_token(w: str) -> str:
++    w = unicodedata.normalize("NFC", w).lower()
++    return re.sub(r"[^\w\s]", "", w).strip()
++
++
++def _strip_punct(w: str) -> str:
++    return re.sub(r"[^\w\s]", "", w).strip()
++
++
++def _is_entity(word: str, idx: int) -> bool:
++    """Detects whether a token is an entity requiring strict immunity."""
++    clean = _strip_punct(word)
++    if not clean:
++        return False
++    # 1. Contains digits
++    if re.search(r"\d", clean):
++        return True
++    # 2. All-caps acronym (len >= 2)
++    if len(clean) >= 2 and clean.isupper():
++        return True
++    # 3. Known domain entities
++    if clean.lower() in DOMAIN_ENTITIES:
++        return True
++    # 4. Mid-sentence uppercase (proper nouns like Lê Minh, Lan, Bố, Đà Lạt)
++    if idx > 0 and clean[0].isupper() and clean.lower() not in VI_PARTICLES:
++        return True
++    return False
++
++
++def verify_with_ctc_anchor(whisper_hyp: str, ctc_hyp: str) -> str:
++    """Refines a seq2seq Whisper hypothesis using a monotonic CTC acoustic anchor.
++
++    Pillars (Generic Phonetic Alignment):
++    1. Strict Entity Immunity: Never corrupts brand names, acronyms, proper nouns, or ITN numbers.
++    2. Phonetic Distance Bounded Substitution: Replaces non-entity single tokens if edit distance <= 2.
++    3. Flanked Omitted Syllable Recovery: Restores missing single syllables flanked by matching context.
++    4. Particle Drift Resolution: Reconciles tail conversational particles with acoustic frame evidence.
++    """
++    if not whisper_hyp or not ctc_hyp:
++        return whisper_hyp
++
++    whisper_clean = unicodedata.normalize("NFC", whisper_hyp).strip()
++    ctc_clean = unicodedata.normalize("NFC", ctc_hyp).strip()
++
++    w_words = whisper_clean.split()
++    c_words = ctc_clean.split()
++
++    if not w_words or not c_words:
++        return whisper_clean
++
++    w_norm = [_normalize_token(w) for w in w_words]
++    c_norm = [_normalize_token(w) for w in c_words]
++
++    # Fast path: normalized texts are identical
++    if w_norm == c_norm:
++        return whisper_clean
++
++    refined_words = list(w_words)
++
++    # 1. Generic Utterance Onset Guard (Bounded Phonetic Edit Distance <= 2)
++    if w_norm and c_norm and w_norm[0] != c_norm[0]:
++        if not _is_entity(refined_words[0], 0) and not _is_entity(c_words[0], 0):
++            if _phonetic_distance(w_norm[0], c_norm[0]) <= 2:
++                orig_w = refined_words[0]
++                punc = ""
++                m = re.search(r"([,.:?!;]+)$", orig_w)
++                if m:
++                    punc = m.group(1)
++                replacement = c_words[0]
++                if orig_w and orig_w[0].isupper():
++                    replacement = replacement.capitalize()
++                refined_words[0] = replacement + punc
++                w_norm[0] = c_norm[0]
++
++    matcher = SequenceMatcher(None, w_norm, c_norm)
++    similarity = matcher.ratio()
++
++    # If hypotheses are excessively dissimilar (< 0.40), trust Whisper LM
++    if similarity < 0.40:
++        result = " ".join(refined_words)
++        result = re.sub(r"\s+([,.:?!])", r"\1", result)
++        return re.sub(r"\s+", " ", result).strip()
++
++    opcodes = matcher.get_opcodes()
++
++    for tag, i1, i2, j1, j2 in reversed(opcodes):
++        if tag == "equal":
++            continue
++
++        w_span_norm = tuple(w_norm[i1:i2])
++        c_span_norm = tuple(c_norm[j1:j2])
++        c_span_raw = c_words[j1:j2]
++
++        span_has_entity = any(_is_entity(refined_words[idx], idx) for idx in range(i1, i2))
++
++        # Case 1: Tail particle substitution
++        if i2 == len(w_words) and j2 == len(c_words) and (i2 - i1 == 1) and (j2 - j1 == 1):
++            w_p = w_span_norm[0]
++            c_p = c_span_norm[0]
++            if (w_p in VI_PARTICLES or c_p in VI_PARTICLES) and not span_has_entity:
++                orig_w = refined_words[i1]
++                punc = ""
++                m = re.search(r"([,.:?!;]+)$", orig_w)
++                if m:
++                    punc = m.group(1)
++                replacement = c_span_raw[0]
++                if orig_w and orig_w[0].isupper():
++                    replacement = replacement.capitalize()
++                refined_words[i1] = replacement + punc
++                continue
++
++        # If span contains protected entity, STRICT IMMUNITY: never replace or delete!
++        if span_has_entity:
++            continue
++
++        # Case 2: Hallucinated word deletion in Whisper
++        if tag == "delete":
++            prev_match = (i1 > 0)
++            next_match = (i2 < len(w_words))
++            if prev_match and next_match:
++                deleted_punct = ""
++                for dw in refined_words[i1:i2]:
++                    m = re.search(r"([,.:?!;]+)$", dw)
++                    if m:
++                        deleted_punct += m.group(1)
++                del refined_words[i1:i2]
++                if deleted_punct and i1 - 1 < len(refined_words):
++                    refined_words[i1 - 1] = refined_words[i1 - 1].rstrip(",.:?!;") + deleted_punct
++                continue
++
++        # Case 3: Swallowed / omitted single syllable recovery (flanked by matches)
++        if tag == "insert":
++            if (j2 - j1 == 1) and (i1 > 0) and (i1 < len(refined_words)):
++                c_tok = c_span_raw[0]
++                if not _is_entity(c_tok, i1) and _strip_punct(c_tok).isalpha():
++                    refined_words.insert(i1, c_tok.lower())
++                continue
++
++        # Case 4: Principled single-token phonetic substitution (edit distance <= 2)
++        if tag == "replace":
++            # 4a. 1-to-1 single syllable substitution with phonetic distance <= 2
++            if (i2 - i1 == 1) and (j2 - j1 == 1):
++                w_tok = w_span_norm[0]
++                c_tok = c_span_norm[0]
++                if not _is_entity(c_span_raw[0], i1):
++                    if _phonetic_distance(w_tok, c_tok) <= 2:
++                        orig_first = refined_words[i1]
++                        punc = ""
++                        m = re.search(r"([,.:?!;]+)$", orig_first)
++                        if m:
++                            punc = m.group(1)
++                        replacement = c_span_raw[0]
++                        if orig_first and orig_first[0].isupper():
++                            replacement = replacement.capitalize()
++                        refined_words[i1] = replacement + punc
++                        continue
++
++            # 4b. 1-to-2 swallowed syllable with phonetic onset anchor (e.g. 'bắt' -> 'tắt đèn')
++            if (i2 - i1 == 1) and (j2 - j1 == 2):
++                w_tok = w_span_norm[0]
++                c_first = c_span_norm[0]
++                if not any(_is_entity(tok, i1) for tok in c_span_raw):
++                    if _phonetic_distance(w_tok, c_first) <= 2:
++                        orig_first = refined_words[i1]
++                        punc = ""
++                        m = re.search(r"([,.:?!;]+)$", orig_first)
++                        if m:
++                            punc = m.group(1)
++                        rep_tokens = list(c_span_raw)
++                        if orig_first and orig_first[0].isupper():
++                            rep_tokens[0] = rep_tokens[0].capitalize()
++                        if punc:
++                            rep_tokens[-1] = rep_tokens[-1] + punc
++                        refined_words[i1:i2] = rep_tokens
++                        continue
++
++    result = " ".join(refined_words)
++    result = re.sub(r"\s+([,.:?!])", r"\1", result)
++    result = re.sub(r"\s+", " ", result).strip()
++    return result
++
+ 
+ def _sanitize_hyp(raw_text: str, enable_itn: bool = True) -> str:
+     """Sanitizes raw Whisper hypothesis by stripping tags and applying ITN."""
+@@ -61,6 +284,8 @@ class WhisperASREngine:
+         vad_db_threshold: float = -35.0,
+         vad_margin_ms: float = 170.0,
+         repetition_penalty: float = 1.02,
++        ctc_anchor: Any | None = None,
++        enable_ctc_anchor: bool = True,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -85,6 +310,16 @@ class WhisperASREngine:
+         self.vad_db_threshold = float(vad_db_threshold)
+         self.vad_margin_ms = float(vad_margin_ms)
+         self.repetition_penalty = float(repetition_penalty) if repetition_penalty is not None else 1.0
++        self.enable_ctc_anchor = bool(enable_ctc_anchor)
++        if self.enable_ctc_anchor and ctc_anchor is None:
++            try:
++                from src.asr.chunkformer_engine import ChunkFormerASREngine
++
++                self.ctc_anchor = ChunkFormerASREngine(device=device, enable_itn=self.enable_itn)
++            except Exception:
++                self.ctc_anchor = None
++        else:
++            self.ctc_anchor = ctc_anchor
+ 
+         # Attempt standard AutoProcessor with graceful fallback for models with tokenizer quirks
+         try:
+@@ -239,6 +474,10 @@ class WhisperASREngine:
+ 
+         return gen_kwargs
+ 
++    def verify_with_ctc_anchor(self, whisper_hyp: str, ctc_hyp: str) -> str:
++        """Refines Whisper hypothesis with monotonic CTC anchor transcript."""
++        return verify_with_ctc_anchor(whisper_hyp, ctc_hyp)
++
+     def transcribe(
+         self,
+         audio_path: str | Path,
+@@ -266,6 +505,13 @@ class WhisperASREngine:
+         raw_text = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+         clean_text = _sanitize_hyp(raw_text, enable_itn=self.enable_itn)
+ 
++        if self.enable_ctc_anchor and self.ctc_anchor is not None:
++            try:
++                ctc_res = self.ctc_anchor.transcribe(audio_path)
++                clean_text = self.verify_with_ctc_anchor(clean_text, ctc_res.text)
++            except Exception:
++                pass
++
+         return ASRResult(
+             text=clean_text,
+             raw_text=raw_text,
+@@ -332,13 +578,26 @@ class WhisperASREngine:
+             elapsed = time.perf_counter() - t0
+             avg_lat = elapsed / len(chunk_paths)
+ 
++            ctc_transcripts = None
++            if self.enable_ctc_anchor and self.ctc_anchor is not None:
++                try:
++                    if hasattr(self.ctc_anchor, "transcribe_batch"):
++                        ctc_res_list = self.ctc_anchor.transcribe_batch(chunk_paths, batch_size=batch_size)
++                    else:
++                        ctc_res_list = [self.ctc_anchor.transcribe(p) for p in chunk_paths]
++                    ctc_transcripts = [r.text for r in ctc_res_list]
++                except Exception:
++                    ctc_transcripts = None
++
+             raw_iter = iter(raw_texts)
+-            for w in waveforms:
++            for idx_p, w in enumerate(waveforms):
+                 if w is None:
+                     results.append(ASRResult(text="", raw_text="", latency_s=avg_lat))
+                     continue
+                 raw_text = next(raw_iter)
+                 clean_text = _sanitize_hyp(raw_text, enable_itn=self.enable_itn)
++                if ctc_transcripts and idx_p < len(ctc_transcripts) and ctc_transcripts[idx_p]:
++                    clean_text = self.verify_with_ctc_anchor(clean_text, ctc_transcripts[idx_p])
+                 results.append(
+                     ASRResult(
+                         text=clean_text,

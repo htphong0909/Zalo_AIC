@@ -1,0 +1,24 @@
+{
+  "loop": 13,
+  "hypothesis": "Grounded conversational command prompting with conditional syntax anchors and comprehensive multi-domain entity coverage eliminates prefix verb distortion and sentence-final polite particle divergence.",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.12%, delta EM=-0.67%) or Train regressed",
+  "train": {
+    "wer": 1.22,
+    "cer": 1.05,
+    "sentence_em": 87.33,
+    "latency": 0.4874
+  },
+  "dev": {
+    "wer": 1.69,
+    "cer": 1.21,
+    "sentence_em": 86.62,
+    "latency": 0.4885
+  },
+  "deltas": {
+    "delta_dev_wer": 0.11999999999999988,
+    "delta_dev_cer": 0.11999999999999988,
+    "delta_dev_em": -0.6700000000000017,
+    "delta_train_wer": 0.22999999999999998
+  }
+}

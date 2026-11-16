@@ -1,0 +1,360 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 4669295..c4949a9 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,13 +1,13 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 1,
+-  "best_dev_wer": 12.42,
+-  "best_dev_cer": 8.99,
+-  "best_dev_em": 24.75,
+-  "best_train_wer": 5.79,
+-  "best_train_em": 44.67,
+-  "total_loops": 3,
+-  "accepted_loops": 2,
++  "current_best_loop": 3,
++  "best_dev_wer": 1.74,
++  "best_dev_cer": 1.2,
++  "best_dev_em": 85.62,
++  "best_train_wer": 1.44,
++  "best_train_em": 88.67,
++  "total_loops": 4,
++  "accepted_loops": 3,
+   "rejected_loops": 1,
+   "history": [
+     {
+@@ -81,6 +81,30 @@
+         "delta_dev_em": -22.740000000000002,
+         "delta_train_wer": 23.53
+       }
++    },
++    {
++      "loop": 3,
++      "hypothesis": "Zalo-specialized PhoWhisper Large (1.54B) with Vietnamese ITN and domain prompt conditioning",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-10.68%) or EM improved (+60.87%) without train collapse",
++      "train": {
++        "wer": 1.44,
++        "cer": 1.24,
++        "sentence_em": 88.67,
++        "latency": 1.4924
++      },
++      "dev": {
++        "wer": 1.74,
++        "cer": 1.2,
++        "sentence_em": 85.62,
++        "latency": 1.3979
++      },
++      "deltas": {
++        "delta_dev_wer": -10.68,
++        "delta_dev_cer": -7.79,
++        "delta_dev_em": 60.870000000000005,
++        "delta_train_wer": -4.35
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index c47957a..7d4c698 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -30,6 +30,7 @@ class WhisperASREngine:
+         task: str = "transcribe",
+         enable_itn: bool = True,
+         initial_prompt: str | None = DEFAULT_WHISPER_PROMPT,
++        attn_implementation: str | None = "sdpa",
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -46,35 +47,52 @@ class WhisperASREngine:
+         self.task = task
+         self.enable_itn = enable_itn
+         self.initial_prompt = initial_prompt
++        self.attn_implementation = attn_implementation
+ 
+         # Attempt standard AutoProcessor with graceful fallback for models with tokenizer quirks
+         # (e.g. kzap201/phowhisper-large-zaloai where AutoProcessor encounters AttributeError: 'list' object has no attribute 'keys')
++        # PhoWhisper Large is based on Whisper-large-v2 (80 mel filterbanks)
+         try:
+             self.processor = AutoProcessor.from_pretrained(model_id)
+         except (AttributeError, Exception):
+             from transformers import WhisperFeatureExtractor, WhisperProcessor, WhisperTokenizerFast
+ 
+-            try:
+-                feature_extractor = WhisperFeatureExtractor.from_pretrained(model_id)
+-            except Exception:
+-                feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-large-v2")
++            feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-large-v2")
+             tokenizer = WhisperTokenizerFast.from_pretrained(model_id, extra_special_tokens={})
+             self.processor = WhisperProcessor(feature_extractor=feature_extractor, tokenizer=tokenizer)
+ 
++        model_kwargs: dict = {
++            "torch_dtype": torch_dtype,
++            "low_cpu_mem_usage": True,
++        }
++        if self.attn_implementation:
++            model_kwargs["attn_implementation"] = self.attn_implementation
++
+         try:
+             self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
+                 model_id,
+-                torch_dtype=torch_dtype,
+-                low_cpu_mem_usage=True,
++                **model_kwargs,
++            ).to(device)
++        except TypeError:
++            model_kwargs.pop("attn_implementation", None)
++            self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
++                model_id,
++                **model_kwargs,
+             ).to(device)
+         except Exception:
+             from transformers import WhisperForConditionalGeneration
+ 
+-            self.model = WhisperForConditionalGeneration.from_pretrained(
+-                model_id,
+-                torch_dtype=torch_dtype,
+-                low_cpu_mem_usage=True,
+-            ).to(device)
++            try:
++                self.model = WhisperForConditionalGeneration.from_pretrained(
++                    model_id,
++                    **model_kwargs,
++                ).to(device)
++            except TypeError:
++                model_kwargs.pop("attn_implementation", None)
++                self.model = WhisperForConditionalGeneration.from_pretrained(
++                    model_id,
++                    **model_kwargs,
++                ).to(device)
+ 
+         self.model.eval()
+ 
+@@ -134,3 +152,104 @@ class WhisperASREngine:
+             raw_text=raw_text,
+             latency_s=time.perf_counter() - t0,
+         )
++
++    def transcribe_batch(
++        self,
++        audio_paths: list[str | Path],
++        *,
++        batch_size: int = 8,
++        extra_contexts: list[str | None] | None = None,
++    ) -> list[ASRResult]:
++        """Transcribe a batch of audio files with accelerated batched decoding and ITN."""
++        import torch
++
++        if not audio_paths:
++            return []
++
++        if extra_contexts is not None and len(extra_contexts) != len(audio_paths):
++            raise ValueError(
++                f"extra_contexts length ({len(extra_contexts)}) must match audio_paths length ({len(audio_paths)})"
++            )
++
++        results: list[ASRResult] = []
++
++        for i in range(0, len(audio_paths), batch_size):
++            chunk_paths = audio_paths[i : i + batch_size]
++            chunk_contexts = (
++                extra_contexts[i : i + batch_size] if extra_contexts is not None else [None] * len(chunk_paths)
++            )
++
++            t0 = time.perf_counter()
++            waveforms = []
++            for p in chunk_paths:
++                try:
++                    w, _ = load_wav_16k(p, target_sr=16000)
++                    waveforms.append(w)
++                except Exception:
++                    waveforms.append(None)
++
++            active_waveforms = [w for w in waveforms if w is not None]
++            if not active_waveforms:
++                for _ in chunk_paths:
++                    results.append(ASRResult(text="", raw_text="", latency_s=0.0))
++                continue
++
++            inputs = self.processor(
++                active_waveforms,
++                sampling_rate=16000,
++                return_tensors="pt",
++            )
++            input_features = inputs.input_features.to(self.device, dtype=self.torch_dtype)
++
++            gen_kwargs: dict = {
++                "language": self.language,
++                "task": self.task,
++                "do_sample": False,
++            }
++
++            first_ctx = chunk_contexts[0] if chunk_contexts else None
++            same_context = all(c == first_ctx for c in chunk_contexts)
++            prompt_text = self.initial_prompt
++            if same_context and first_ctx:
++                prompt_text = f"{prompt_text} {first_ctx}".strip() if prompt_text else first_ctx
++
++            if prompt_text and hasattr(self.processor, "get_prompt_ids"):
++                try:
++                    p_ids = self.processor.get_prompt_ids(prompt_text[:250])
++                    if not isinstance(p_ids, torch.Tensor):
++                        p_ids = torch.tensor(p_ids, device=self.device)
++                    else:
++                        p_ids = p_ids.to(self.device)
++                    gen_kwargs["prompt_ids"] = p_ids
++                except Exception:
++                    pass
++
++            with torch.inference_mode():
++                predicted_ids = self.model.generate(input_features, **gen_kwargs)
++
++            raw_texts = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)
++            elapsed = time.perf_counter() - t0
++            avg_lat = elapsed / len(chunk_paths)
++
++            raw_iter = iter(raw_texts)
++            for w in waveforms:
++                if w is None:
++                    results.append(ASRResult(text="", raw_text="", latency_s=avg_lat))
++                    continue
++                raw_text = next(raw_iter)
++                clean_text = strip_asr_tags(raw_text)
++                clean_text = unicodedata.normalize("NFC", clean_text).strip()
++                if self.enable_itn:
++                    from src.asr.itn import inverse_text_normalize
++
++                    clean_text = inverse_text_normalize(clean_text)
++
++                results.append(
++                    ASRResult(
++                        text=clean_text,
++                        raw_text=raw_text,
++                        latency_s=avg_lat,
++                    )
++                )
++
++        return results
+diff --git a/src/eval/blind_dev_evaluator.py b/src/eval/blind_dev_evaluator.py
+index 42bea38..71a840f 100644
+--- a/src/eval/blind_dev_evaluator.py
++++ b/src/eval/blind_dev_evaluator.py
+@@ -38,6 +38,7 @@ ALLOWED_DEV_MACRO_KEYS = {
+ def run_sealed_blind_dev_evaluation(
+     engine,
+     output_json: Path | None = None,
++    batch_size: int = 8,
+ ) -> dict:
+     splits_file = ROOT / "configs" / "splits" / "dev_v1.json"
+     splits = json.load(open(splits_file, encoding="utf-8"))
+@@ -53,17 +54,24 @@ def run_sealed_blind_dev_evaluation(
+             if item["id"] in dev_ids:
+                 data.append(item)
+ 
+-    wers, cers, exact_count, latencies = [], [], 0, []
+-
++    valid_data = []
++    valid_paths = []
+     for item in data:
+-        gt = item.get("audio_text", "")
+         audio_rel = item.get("audio", "")
+         audio_path = ROOT / "data" / "train" / audio_rel
++        if audio_path.exists():
++            valid_data.append(item)
++            valid_paths.append(str(audio_path))
+ 
+-        if not audio_path.exists():
+-            continue
++    if hasattr(engine, "transcribe_batch") and batch_size > 1:
++        res_list = engine.transcribe_batch(valid_paths, batch_size=batch_size)
++    else:
++        res_list = [engine.transcribe(p) for p in valid_paths]
+ 
+-        res = engine.transcribe(str(audio_path))
++    wers, cers, exact_count, latencies = [], [], 0, []
++
++    for item, res in zip(valid_data, res_list):
++        gt = item.get("audio_text", "")
+         pred = res.text
+         lat = res.latency_s
+ 
+@@ -107,6 +115,7 @@ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description="Run Sealed Blind Box Dev ASR Evaluation")
+     parser.add_argument("--model-id", type=str, default="kzap201/phowhisper-large-zaloai")
+     parser.add_argument("--engine", type=str, default="whisper", choices=["whisper", "chunkformer"])
++    parser.add_argument("--batch-size", type=int, default=8)
+     parser.add_argument("--output", type=str, default="scripts/scratch/temp_golden_res.json")
+     args = parser.parse_args()
+ 
+@@ -118,6 +127,6 @@ if __name__ == "__main__":
+         engine = ChunkFormerASREngine()
+ 
+     out_p = Path(args.output) if args.output else None
+-    res = run_sealed_blind_dev_evaluation(engine, output_json=out_p)
++    res = run_sealed_blind_dev_evaluation(engine, output_json=out_p, batch_size=args.batch_size)
+     # Print ONLY macro metrics - no individual sample identities
+     print(f"[REFEREE 2: SEALED BLIND DEV] Samples={res['total_samples']} | Dev WER={res['wer']}% | Dev CER={res['cer']}% | Dev EM={res['sentence_em']}% | Latency={res['latency']}s")
+diff --git a/src/eval/train_asr_evaluator.py b/src/eval/train_asr_evaluator.py
+index 7333667..279b74c 100644
+--- a/src/eval/train_asr_evaluator.py
++++ b/src/eval/train_asr_evaluator.py
+@@ -29,6 +29,7 @@ def run_train_evaluation(
+     engine,
+     max_samples: int = 150,
+     output_json: Path | None = None,
++    batch_size: int = 8,
+ ) -> dict:
+     splits_file = ROOT / "configs" / "splits" / "dev_v1.json"
+     splits = json.load(open(splits_file, encoding="utf-8"))
+@@ -46,19 +47,26 @@ def run_train_evaluation(
+             if len(data) >= max_samples:
+                 break
+ 
++    valid_data = []
++    valid_paths = []
++    for item in data:
++        audio_rel = item.get("audio", "")
++        audio_path = ROOT / "data" / "train" / audio_rel
++        if audio_path.exists():
++            valid_data.append(item)
++            valid_paths.append(str(audio_path))
++
++    if hasattr(engine, "transcribe_batch") and batch_size > 1:
++        res_list = engine.transcribe_batch(valid_paths, batch_size=batch_size)
++    else:
++        res_list = [engine.transcribe(p) for p in valid_paths]
++
+     wers, cers, exact_count, latencies = [], [], 0, []
+     error_clusters = []
+ 
+-    for idx, item in enumerate(data, 1):
++    for item, res in zip(valid_data, res_list):
+         sid = item["id"]
+         gt = item.get("audio_text", "")
+-        audio_rel = item.get("audio", "")
+-        audio_path = ROOT / "data" / "train" / audio_rel
+-
+-        if not audio_path.exists():
+-            continue
+-
+-        res = engine.transcribe(str(audio_path))
+         pred = res.text
+         lat = res.latency_s
+ 
+@@ -112,6 +120,7 @@ if __name__ == "__main__":
+     parser.add_argument("--model-id", type=str, default="kzap201/phowhisper-large-zaloai")
+     parser.add_argument("--engine", type=str, default="whisper", choices=["whisper", "chunkformer"])
+     parser.add_argument("--max-samples", type=int, default=150)
++    parser.add_argument("--batch-size", type=int, default=8)
+     parser.add_argument("--output", type=str, default="scripts/scratch/temp_train_res.json")
+     args = parser.parse_args()
+ 
+@@ -123,5 +132,5 @@ if __name__ == "__main__":
+         engine = ChunkFormerASREngine()
+ 
+     out_p = Path(args.output) if args.output else None
+-    res = run_train_evaluation(engine, max_samples=args.max_samples, output_json=out_p)
++    res = run_train_evaluation(engine, max_samples=args.max_samples, output_json=out_p, batch_size=args.batch_size)
+     print(f"[REFEREE 1: TRAIN GLASS-BOX] Samples={res['total_samples']} | WER={res['wer']}% | CER={res['cer']}% | EM={res['sentence_em']}% | Latency={res['latency']}s")

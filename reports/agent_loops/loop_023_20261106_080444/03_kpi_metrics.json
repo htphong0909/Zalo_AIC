@@ -1,0 +1,24 @@
+{
+  "loop": 23,
+  "hypothesis": "Constrained 2-beam search decoding (num_beams=2, early_stopping=True) with repetition penalty (1.03) over calibrated acoustic preprocessing",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.06%, delta EM=+0.00%) or Train regressed",
+  "train": {
+    "wer": 1.11,
+    "cer": 0.94,
+    "sentence_em": 91.33,
+    "latency": 0.8244
+  },
+  "dev": {
+    "wer": 1.61,
+    "cer": 1.17,
+    "sentence_em": 86.96,
+    "latency": 0.7873
+  },
+  "deltas": {
+    "delta_dev_wer": 0.06000000000000005,
+    "delta_dev_cer": 0.07999999999999985,
+    "delta_dev_em": 0.0,
+    "delta_train_wer": 0.1200000000000001
+  }
+}

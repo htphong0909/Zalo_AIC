@@ -1,0 +1,24 @@
+{
+  "loop": 32,
+  "hypothesis": "Symmetric 170ms VAD collar (+1 encoder frame buffer at -35dB clean SNR) captures speech onset VOT and trailing vowel release",
+  "decision": "ACCEPTED",
+  "reason": "Dev WER improved (-0.01%) or EM improved (+0.34%) without train collapse",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.86,
+    "sentence_em": 92.0,
+    "latency": 0.3647
+  },
+  "dev": {
+    "wer": 1.51,
+    "cer": 1.07,
+    "sentence_em": 87.63,
+    "latency": 0.3531
+  },
+  "deltas": {
+    "delta_dev_wer": -0.010000000000000009,
+    "delta_dev_cer": -0.010000000000000009,
+    "delta_dev_em": 0.3399999999999892,
+    "delta_train_wer": 0.0
+  }
+}

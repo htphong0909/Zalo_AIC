@@ -1,0 +1,35 @@
+name: e2e_phowhisper_lfm3_17b
+seed: 42
+
+asr:
+  engine: whisper
+  model_id: kzap201/phowhisper-large-zaloai
+  adapter_path: models/phowhisper_lora
+  language: vi
+  task: transcribe
+  dtype: float16
+  enable_itn: true
+  batch_size: 8
+
+llm:
+  backend: transformers
+  model_id: LiquidAI/LFM3-1.7B
+  adapter_path: null
+  max_model_len: 16384
+  max_new_tokens: 384
+  enable_thinking: false
+  dtype: bfloat16
+  repetition_penalty: 1.1
+
+agent:
+  prompt_style: v1
+  tool_selector: installed_apps
+  max_steps: 8
+  max_repairs: 2
+  timeout_s: 25.0
+  max_prompt_tokens: 12000
+  max_result_chars: 1500
+  guardrails:
+    enable_xref_guard: true
+    enable_arg_sanitizer: true
+    enable_ask_guard: true

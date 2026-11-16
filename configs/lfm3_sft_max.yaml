@@ -1,0 +1,35 @@
+model_id: LiquidAI/LFM3-1.7B
+train_file: data/sft/lfm3_train_sft.jsonl
+output_dir: experiments/exp_20261108_lfm3_sft_apex
+seed: 42
+
+lora:
+  r: 64
+  alpha: 128
+  dropout: 0.05
+  use_dora: false
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - in_proj
+    - out_proj
+    - w1
+    - w2
+    - w3
+
+training:
+  num_train_epochs: 1
+  max_steps: -1
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
+  gradient_checkpointing: true
+  learning_rate: 0.00015
+  lr_scheduler_type: cosine
+  warmup_steps: 0.05
+  max_length: 8192
+  logging_steps: 10
+  save_strategy: "epoch"
+  save_steps: 50

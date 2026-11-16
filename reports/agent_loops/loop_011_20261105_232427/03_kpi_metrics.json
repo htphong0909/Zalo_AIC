@@ -1,0 +1,24 @@
+{
+  "loop": 11,
+  "hypothesis": "Symmetric bilateral acoustic collar padding (40ms pre + 40ms post), prompt entity de-biasing, and financial dialect ITN recovery",
+  "decision": "ACCEPTED",
+  "reason": "Dev WER improved (-0.01%) or EM improved (-0.33%) without train collapse",
+  "train": {
+    "wer": 1.14,
+    "cer": 0.96,
+    "sentence_em": 91.33,
+    "latency": 0.3655
+  },
+  "dev": {
+    "wer": 1.6,
+    "cer": 1.08,
+    "sentence_em": 86.96,
+    "latency": 0.3523
+  },
+  "deltas": {
+    "delta_dev_wer": -0.010000000000000009,
+    "delta_dev_cer": 0.010000000000000009,
+    "delta_dev_em": -0.3300000000000125,
+    "delta_train_wer": -0.020000000000000018
+  }
+}

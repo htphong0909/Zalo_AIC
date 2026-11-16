@@ -1,0 +1,24 @@
+{
+  "loop": 39,
+  "hypothesis": "Colloquial Dialectal Negation Normalization: Southern Vietnamese 'hông' before action/modal predicates mapped to standard 'không'",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.03%, delta EM=-1.01%) or Train regressed",
+  "train": {
+    "wer": 0.8,
+    "cer": 0.62,
+    "sentence_em": 92.67,
+    "latency": 0.365
+  },
+  "dev": {
+    "wer": 1.53,
+    "cer": 1.04,
+    "sentence_em": 85.95,
+    "latency": 0.3515
+  },
+  "deltas": {
+    "delta_dev_wer": 0.030000000000000027,
+    "delta_dev_cer": 0.010000000000000009,
+    "delta_dev_em": -1.009999999999991,
+    "delta_train_wer": -0.019999999999999907
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "loop": 38,
+  "hypothesis": "Calibrated 20ms pre-roll acoustic padding aligns convolutional front-end downsampling to eliminate VOT onset corruption",
+  "decision": "ACCEPTED",
+  "reason": "Dev WER improved (-0.01%) or EM improved (-0.67%) without train collapse",
+  "train": {
+    "wer": 0.82,
+    "cer": 0.63,
+    "sentence_em": 92.67,
+    "latency": 0.3724
+  },
+  "dev": {
+    "wer": 1.5,
+    "cer": 1.03,
+    "sentence_em": 86.96,
+    "latency": 0.3604
+  },
+  "deltas": {
+    "delta_dev_wer": -0.010000000000000009,
+    "delta_dev_cer": -0.040000000000000036,
+    "delta_dev_em": -0.6700000000000017,
+    "delta_train_wer": -0.17000000000000004
+  }
+}

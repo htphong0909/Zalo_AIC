@@ -1,0 +1,10 @@
+{
+  "loop": 11,
+  "timestamp": "2026-11-06T00:00:29.866866",
+  "optimization_summary": "Symmetric bilateral acoustic collar padding (40ms pre + 40ms post), prompt entity de-biasing, and financial dialect ITN recovery",
+  "diff_stat": "configs/agent_loop_state.json | 114 ++++++++++++++++++++++++++++++++++++++----\n src/asr/itn.py                |  10 ++++\n src/asr/whisper_engine.py     |  15 +++---\n 3 files changed, 124 insertions(+), 15 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "74/74 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

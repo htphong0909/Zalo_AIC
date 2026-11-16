@@ -1,0 +1,160 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 671801e..5c48881 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 3,
+-  "best_dev_wer": 1.74,
+-  "best_dev_cer": 1.2,
+-  "best_dev_em": 85.62,
+-  "best_train_wer": 1.44,
+-  "best_train_em": 88.67,
+-  "total_loops": 7,
+-  "accepted_loops": 3,
+-  "rejected_loops": 4,
++  "current_best_loop": 7,
++  "best_dev_wer": 1.61,
++  "best_dev_cer": 1.07,
++  "best_dev_em": 87.29,
++  "best_train_wer": 1.16,
++  "best_train_em": 90.67,
++  "total_loops": 10,
++  "accepted_loops": 4,
++  "rejected_loops": 6,
+   "history": [
+     {
+       "loop": 0,
+@@ -177,6 +177,78 @@
+         "delta_dev_em": -6.359999999999999,
+         "delta_train_wer": 0.28
+       }
++    },
++    {
++      "loop": 7,
++      "hypothesis": "Acoustic 40ms pre-roll padding, domain prompt bleed suppression, and traditional tone harmonization",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.13%) or EM improved (+1.67%) without train collapse",
++      "train": {
++        "wer": 1.16,
++        "cer": 0.97,
++        "sentence_em": 90.67,
++        "latency": 0.4596
++      },
++      "dev": {
++        "wer": 1.61,
++        "cer": 1.07,
++        "sentence_em": 87.29,
++        "latency": 0.4639
++      },
++      "deltas": {
++        "delta_dev_wer": -0.1299999999999999,
++        "delta_dev_cer": -0.1299999999999999,
++        "delta_dev_em": 1.6700000000000017,
++        "delta_train_wer": -0.28
++      }
++    },
++    {
++      "loop": 8,
++      "hypothesis": "Enhanced LifeMate domain entity prompt conditioning with selective tone conflict de-biasing",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.17%, delta EM=-3.34%) or Train regressed",
++      "train": {
++        "wer": 1.27,
++        "cer": 1.06,
++        "sentence_em": 89.33,
++        "latency": 0.5082
++      },
++      "dev": {
++        "wer": 1.78,
++        "cer": 1.18,
++        "sentence_em": 83.95,
++        "latency": 0.4839
++      },
++      "deltas": {
++        "delta_dev_wer": 0.16999999999999993,
++        "delta_dev_cer": 0.10999999999999988,
++        "delta_dev_em": -3.3400000000000034,
++        "delta_train_wer": 0.1100000000000001
++      }
++    },
++    {
++      "loop": 9,
++      "hypothesis": "Acoustic domain LoRA adaptation (r=16, alpha=32) on PhoWhisper Large targeting attention projections",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.07%, delta EM=-0.33%) or Train regressed",
++      "train": {
++        "wer": 0.59,
++        "cer": 0.47,
++        "sentence_em": 92.67,
++        "latency": 0.361
++      },
++      "dev": {
++        "wer": 1.68,
++        "cer": 1.16,
++        "sentence_em": 86.96,
++        "latency": 0.344
++      },
++      "deltas": {
++        "delta_dev_wer": 0.06999999999999984,
++        "delta_dev_cer": 0.08999999999999986,
++        "delta_dev_em": -0.3300000000000125,
++        "delta_train_wer": -0.57
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/configs/e2e_phowhisper_qwen35_4b.yaml b/configs/e2e_phowhisper_qwen35_4b.yaml
+index c49af89..bc1e469 100644
+--- a/configs/e2e_phowhisper_qwen35_4b.yaml
++++ b/configs/e2e_phowhisper_qwen35_4b.yaml
+@@ -9,6 +9,8 @@ asr:
+   dtype: float16
+   enable_itn: true
+   batch_size: 8
++  pre_roll_pad_ms: 100.0
++  post_roll_pad_ms: 200.0
+ 
+ llm:
+   backend: transformers
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 247cd52..d82e9de 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -50,7 +50,8 @@ class WhisperASREngine:
+         enable_itn: bool = True,
+         initial_prompt: str | None = DEFAULT_WHISPER_PROMPT,
+         attn_implementation: str | None = "sdpa",
+-        pre_roll_pad_ms: float = 40.0,
++        pre_roll_pad_ms: float = 100.0,
++        post_roll_pad_ms: float = 200.0,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -69,6 +70,7 @@ class WhisperASREngine:
+         self.initial_prompt = initial_prompt
+         self.attn_implementation = attn_implementation
+         self.pre_roll_pad_ms = float(pre_roll_pad_ms)
++        self.post_roll_pad_ms = float(post_roll_pad_ms)
+ 
+         # Attempt standard AutoProcessor with graceful fallback for models with tokenizer quirks
+         try:
+@@ -119,10 +121,12 @@ class WhisperASREngine:
+         self.model.eval()
+ 
+     def _pad_waveform(self, waveform: np.ndarray, sr: int = 16000) -> np.ndarray:
+-        if self.pre_roll_pad_ms > 0 and len(waveform) > 0:
+-            pad_samples = int(round((self.pre_roll_pad_ms / 1000.0) * sr))
+-            if pad_samples > 0:
+-                return np.pad(waveform, (pad_samples, 0), mode="constant", constant_values=0.0)
++        if len(waveform) == 0:
++            return waveform
++        pre_samples = int(round((self.pre_roll_pad_ms / 1000.0) * sr)) if self.pre_roll_pad_ms > 0 else 0
++        post_samples = int(round((self.post_roll_pad_ms / 1000.0) * sr)) if self.post_roll_pad_ms > 0 else 0
++        if pre_samples > 0 or post_samples > 0:
++            return np.pad(waveform, (pre_samples, post_samples), mode="constant", constant_values=0.0)
+         return waveform
+ 
+     def _build_gen_kwargs(self, extra_context: str | None = None) -> dict:

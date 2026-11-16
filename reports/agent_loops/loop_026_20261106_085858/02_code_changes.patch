@@ -1,0 +1,13 @@
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 110dd3f..a49e098 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -60,7 +60,7 @@ class WhisperASREngine:
+         trim_silence: bool = True,
+         vad_db_threshold: float = -35.0,
+         vad_margin_ms: float = 150.0,
+-        repetition_penalty: float = 1.02,
++        repetition_penalty: float = 1.01,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor

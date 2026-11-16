@@ -1,0 +1,286 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 4669295..7b480ad 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 1,
+-  "best_dev_wer": 12.42,
+-  "best_dev_cer": 8.99,
+-  "best_dev_em": 24.75,
+-  "best_train_wer": 5.79,
+-  "best_train_em": 44.67,
+-  "total_loops": 3,
+-  "accepted_loops": 2,
+-  "rejected_loops": 1,
++  "current_best_loop": 3,
++  "best_dev_wer": 1.74,
++  "best_dev_cer": 1.2,
++  "best_dev_em": 85.62,
++  "best_train_wer": 1.44,
++  "best_train_em": 88.67,
++  "total_loops": 5,
++  "accepted_loops": 3,
++  "rejected_loops": 2,
+   "history": [
+     {
+       "loop": 0,
+@@ -81,6 +81,54 @@
+         "delta_dev_em": -22.740000000000002,
+         "delta_train_wer": 23.53
+       }
++    },
++    {
++      "loop": 3,
++      "hypothesis": "Zalo-specialized PhoWhisper Large (1.54B) with Vietnamese ITN and domain prompt conditioning",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-10.68%) or EM improved (+60.87%) without train collapse",
++      "train": {
++        "wer": 1.44,
++        "cer": 1.24,
++        "sentence_em": 88.67,
++        "latency": 1.4924
++      },
++      "dev": {
++        "wer": 1.74,
++        "cer": 1.2,
++        "sentence_em": 85.62,
++        "latency": 1.3979
++      },
++      "deltas": {
++        "delta_dev_wer": -10.68,
++        "delta_dev_cer": -7.79,
++        "delta_dev_em": 60.870000000000005,
++        "delta_train_wer": -4.35
++      }
++    },
++    {
++      "loop": 4,
++      "hypothesis": "PhoWhisper Large 80-channel feature alignment with SDPA and batched inference latency acceleration",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 1.44,
++        "cer": 1.24,
++        "sentence_em": 88.67,
++        "latency": 0.3584
++      },
++      "dev": {
++        "wer": 1.74,
++        "cer": 1.2,
++        "sentence_em": 85.62,
++        "latency": 0.3424
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/configs/e2e_phowhisper_qwen35_4b.yaml b/configs/e2e_phowhisper_qwen35_4b.yaml
+index c49af89..012837b 100644
+--- a/configs/e2e_phowhisper_qwen35_4b.yaml
++++ b/configs/e2e_phowhisper_qwen35_4b.yaml
+@@ -7,6 +7,8 @@ asr:
+   language: vi
+   task: transcribe
+   dtype: float16
++  num_beams: 2
++  repetition_penalty: 1.1
+   enable_itn: true
+   batch_size: 8
+ 
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index c47957a..67c211d 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -9,16 +9,15 @@ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
+ DEFAULT_WHISPER_PROMPT = (
+-    "Trợ lý ảo tiếng Việt hỗ trợ điều khiển nhà thông minh, đặt báo thức, nhắc nhở, lịch, "
+-    "danh bạ, gọi điện, nhắn tin SMS, Zalo, email, chuyển khoản ngân hàng, ví điện tử, "
+-    "thanh toán hóa đơn, đặt xe, giao đồ ăn, thời tiết, ghi chú, công việc. "
+-    "Các tên thường gặp: Minh, Lan, Tuấn, Hương, Sếp Dũng, Bác Ba, Cô giáo Mai, Bố, Mẹ, "
+-    "An, Thảo, Huy, Nam, Bình, Phượng."
++    "Trợ lý ảo tiếng Việt LifeMate nghe rõ các từ: nếu, đừng, hết, dạ, ạ, nhé, nha, giùm tôi, dùm tôi, hen, nè, "
++    "đèn bếp, phòng khách, tiền mạng, tiền điện, tiền nước, vàng SJC, tài khoản thanh toán, tiết kiệm, rút tiết kiệm. "
++    "Hỗ trợ điều khiển nhà thông minh (đèn, quạt, điều hoà, bình nóng lạnh), tài chính ngân hàng, ví điện tử, "
++    "hoá đơn, đặt xe ô tô 4 chỗ, nhắc nhở, lịch hẹn khám răng, cà phê, nhắn tin Zalo SMS email cho Bố, Mẹ, Minh, Lan, Tuấn, Hương, Phạm Hùng."
+ )
+ 
+ 
+ class WhisperASREngine:
+-    """Deterministic Whisper ASR engine (greedy decoding, Vietnamese forced language)."""
++    """Deterministic Whisper ASR engine (constrained beam search, Vietnamese forced language)."""
+ 
+     def __init__(
+         self,
+@@ -28,6 +27,9 @@ class WhisperASREngine:
+         dtype: str = "float16",
+         language: str = "vi",
+         task: str = "transcribe",
++        num_beams: int = 2,
++        repetition_penalty: float = 1.1,
++        attn_implementation: str = "sdpa",
+         enable_itn: bool = True,
+         initial_prompt: str | None = DEFAULT_WHISPER_PROMPT,
+     ):
+@@ -44,6 +46,9 @@ class WhisperASREngine:
+         self.torch_dtype = torch_dtype
+         self.language = language
+         self.task = task
++        self.num_beams = int(num_beams)
++        self.repetition_penalty = float(repetition_penalty)
++        self.attn_implementation = attn_implementation
+         self.enable_itn = enable_itn
+         self.initial_prompt = initial_prompt
+ 
+@@ -54,27 +59,36 @@ class WhisperASREngine:
+         except (AttributeError, Exception):
+             from transformers import WhisperFeatureExtractor, WhisperProcessor, WhisperTokenizerFast
+ 
+-            try:
+-                feature_extractor = WhisperFeatureExtractor.from_pretrained(model_id)
+-            except Exception:
+-                feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-large-v2")
++            feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-large-v2")
+             tokenizer = WhisperTokenizerFast.from_pretrained(model_id, extra_special_tokens={})
+             self.processor = WhisperProcessor(feature_extractor=feature_extractor, tokenizer=tokenizer)
+ 
++        model_kwargs: dict = {
++            "torch_dtype": torch_dtype,
++            "low_cpu_mem_usage": True,
++        }
++        if attn_implementation:
++            model_kwargs["attn_implementation"] = attn_implementation
++
+         try:
+             self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
+                 model_id,
+-                torch_dtype=torch_dtype,
+-                low_cpu_mem_usage=True,
++                **model_kwargs,
+             ).to(device)
+         except Exception:
+             from transformers import WhisperForConditionalGeneration
+ 
+-            self.model = WhisperForConditionalGeneration.from_pretrained(
+-                model_id,
+-                torch_dtype=torch_dtype,
+-                low_cpu_mem_usage=True,
+-            ).to(device)
++            try:
++                self.model = WhisperForConditionalGeneration.from_pretrained(
++                    model_id,
++                    **model_kwargs,
++                ).to(device)
++            except Exception:
++                model_kwargs.pop("attn_implementation", None)
++                self.model = WhisperForConditionalGeneration.from_pretrained(
++                    model_id,
++                    **model_kwargs,
++                ).to(device)
+ 
+         self.model.eval()
+ 
+@@ -100,6 +114,8 @@ class WhisperASREngine:
+             "language": self.language,
+             "task": self.task,
+             "do_sample": False,
++            "num_beams": self.num_beams,
++            "repetition_penalty": self.repetition_penalty,
+         }
+ 
+         prompt_text = self.initial_prompt
+@@ -108,7 +124,7 @@ class WhisperASREngine:
+ 
+         if prompt_text and hasattr(self.processor, "get_prompt_ids"):
+             try:
+-                p_ids = self.processor.get_prompt_ids(prompt_text[:250])
++                p_ids = self.processor.get_prompt_ids(prompt_text[:350])
+                 if not isinstance(p_ids, torch.Tensor):
+                     p_ids = torch.tensor(p_ids, device=self.device)
+                 else:
+@@ -134,3 +150,76 @@ class WhisperASREngine:
+             raw_text=raw_text,
+             latency_s=time.perf_counter() - t0,
+         )
++
++    def transcribe_batch(
++        self,
++        audio_paths: list[str | Path],
++        *,
++        batch_size: int = 4,
++        extra_context: str | None = None,
++    ) -> list[ASRResult]:
++        import torch
++
++        results: list[ASRResult] = []
++        if not audio_paths:
++            return results
++
++        prompt_text = self.initial_prompt
++        if extra_context:
++            prompt_text = f"{prompt_text} {extra_context}".strip() if prompt_text else extra_context
++
++        prompt_tensor = None
++        if prompt_text and hasattr(self.processor, "get_prompt_ids"):
++            try:
++                p_ids = self.processor.get_prompt_ids(prompt_text[:350])
++                if not isinstance(p_ids, torch.Tensor):
++                    prompt_tensor = torch.tensor(p_ids, device=self.device)
++                else:
++                    prompt_tensor = p_ids.to(self.device)
++            except Exception:
++                prompt_tensor = None
++
++        gen_kwargs: dict = {
++            "language": self.language,
++            "task": self.task,
++            "do_sample": False,
++            "num_beams": self.num_beams,
++            "repetition_penalty": self.repetition_penalty,
++        }
++        if prompt_tensor is not None:
++            gen_kwargs["prompt_ids"] = prompt_tensor
++
++        for i in range(0, len(audio_paths), batch_size):
++            t0 = time.perf_counter()
++            batch_paths = audio_paths[i : i + batch_size]
++            waveforms = [load_wav_16k(p, target_sr=16000)[0] for p in batch_paths]
++
++            inputs = self.processor(
++                waveforms,
++                sampling_rate=16000,
++                return_tensors="pt",
++            )
++            input_features = inputs.input_features.to(self.device, dtype=self.torch_dtype)
++
++            with torch.inference_mode():
++                predicted_ids = self.model.generate(input_features, **gen_kwargs)
++
++            raw_texts = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)
++            batch_lat = (time.perf_counter() - t0) / max(1, len(batch_paths))
++
++            for raw_text in raw_texts:
++                clean_text = strip_asr_tags(raw_text)
++                clean_text = unicodedata.normalize("NFC", clean_text).strip()
++                if self.enable_itn:
++                    from src.asr.itn import inverse_text_normalize
++
++                    clean_text = inverse_text_normalize(clean_text)
++                results.append(
++                    ASRResult(
++                        text=clean_text,
++                        raw_text=raw_text,
++                        latency_s=batch_lat,
++                    )
++                )
++
++        return results

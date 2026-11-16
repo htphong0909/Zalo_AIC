@@ -1,0 +1,8 @@
+{
+  "loop": 0,
+  "hypothesis": "Base duclvQ/qwen3-asr-1.7b-vimd-full Zero-shot Baseline",
+  "start_time": "2026-11-05T00:35:22.010841",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "main-orchestrator"
+}

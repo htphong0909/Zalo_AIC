@@ -1,0 +1,35 @@
+name: oracle_qwen35_4b_v3_1
+seed: 42
+
+asr:
+  engine: oracle
+  model_id: kzap201/phowhisper-large-zaloai
+  language: vi
+  dtype: float16
+  batch_size: 8
+
+llm:
+  backend: vllm
+  model_id: Qwen/Qwen3.5-4B
+  adapter_path: null
+  max_model_len: 16384
+  max_new_tokens: 512
+  enable_thinking: true
+  dtype: bfloat16
+  repetition_penalty: 1.05
+  gpu_memory_utilization: 0.80
+  guided_decoding: true
+
+agent:
+  prompt_style: qwen35
+  tool_selector: installed_apps
+  max_steps: 10
+  max_repairs: 3
+  timeout_s: 45.0
+  max_prompt_tokens: 13500
+  max_result_chars: 1800
+  guardrails:
+    enable_xref_guard: true
+    enable_arg_sanitizer: true
+    enable_ask_guard: true
+    enable_boundary_verifier: true

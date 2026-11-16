@@ -1,0 +1,239 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 0c3268c..123813d 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 14,
+-  "best_dev_wer": 1.56,
+-  "best_dev_cer": 1.05,
++  "current_best_loop": 17,
++  "best_dev_wer": 1.55,
++  "best_dev_cer": 1.09,
+   "best_dev_em": 86.96,
+-  "best_train_wer": 1.02,
++  "best_train_wer": 0.99,
+   "best_train_em": 92.0,
+-  "total_loops": 17,
+-  "accepted_loops": 7,
+-  "rejected_loops": 10,
++  "total_loops": 25,
++  "accepted_loops": 8,
++  "rejected_loops": 17,
+   "history": [
+     {
+       "loop": 0,
+@@ -417,6 +417,198 @@
+         "delta_dev_em": -2.009999999999991,
+         "delta_train_wer": 0.020000000000000018
+       }
++    },
++    {
++      "loop": 17,
++      "hypothesis": "Calibrated bilateral acoustic collar expansion (symmetric 60ms) and margin safety buffering (150ms) with relaxed autoregressive repetition penalty (1.03)",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.01%) or EM improved (+0.00%) without train collapse",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.3631
++      },
++      "dev": {
++        "wer": 1.55,
++        "cer": 1.09,
++        "sentence_em": 86.96,
++        "latency": 0.3477
++      },
++      "deltas": {
++        "delta_dev_wer": -0.010000000000000009,
++        "delta_dev_cer": 0.040000000000000036,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": -0.030000000000000027
++      }
++    },
++    {
++      "loop": 18,
++      "hypothesis": "Asymmetric acoustic collar geometry (60ms pre-roll, 90ms post-roll buffer) combined with zero-mean centering (DC offset elimination)",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.3638
++      },
++      "dev": {
++        "wer": 1.55,
++        "cer": 1.09,
++        "sentence_em": 86.96,
++        "latency": 0.3457
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 19,
++      "hypothesis": "Deterministic decoding stabilization (condition_on_prev_tokens=False, temperature=0.0, compression_ratio_threshold=2.4) combined with polite enclitic comma suppression, quote removal, and Celsius unit standardization",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.3695
++      },
++      "dev": {
++        "wer": 1.55,
++        "cer": 1.09,
++        "sentence_em": 86.96,
++        "latency": 0.3506
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 20,
++      "hypothesis": "Neutral topic-noun prompt restructuring eliminating action verb prefix bias combined with non-destructive ITN tone preservation",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.10%, delta EM=+1.33%) or Train regressed",
++      "train": {
++        "wer": 0.92,
++        "cer": 0.84,
++        "sentence_em": 92.67,
++        "latency": 0.3654
++      },
++      "dev": {
++        "wer": 1.65,
++        "cer": 1.18,
++        "sentence_em": 88.29,
++        "latency": 0.3568
++      },
++      "deltas": {
++        "delta_dev_wer": 0.09999999999999987,
++        "delta_dev_cer": 0.08999999999999986,
++        "delta_dev_em": 1.3300000000000125,
++        "delta_train_wer": -0.06999999999999995
++      }
++    },
++    {
++      "loop": 21,
++      "hypothesis": "Isolated neutral topic-noun prompt conditioning while strictly preserving traditional tone harmonization in ITN to capture the +1.33% EM gain without orthographic penalties.",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.19%, delta EM=-1.68%) or Train regressed",
++      "train": {
++        "wer": 0.95,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.3669
++      },
++      "dev": {
++        "wer": 1.74,
++        "cer": 1.24,
++        "sentence_em": 85.28,
++        "latency": 0.3586
++      },
++      "deltas": {
++        "delta_dev_wer": 0.18999999999999995,
++        "delta_dev_cer": 0.1499999999999999,
++        "delta_dev_em": -1.6799999999999926,
++        "delta_train_wer": -0.040000000000000036
++      }
++    },
++    {
++      "loop": 22,
++      "hypothesis": "Southern conversational negative particle normalization standardizing pre-predicate debuccalized [hɔŋ] to formal written không",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.01%, delta EM=-0.34%) or Train regressed",
++      "train": {
++        "wer": 0.96,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.364
++      },
++      "dev": {
++        "wer": 1.56,
++        "cer": 1.09,
++        "sentence_em": 86.62,
++        "latency": 0.3574
++      },
++      "deltas": {
++        "delta_dev_wer": 0.010000000000000009,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": -0.3399999999999892,
++        "delta_train_wer": -0.030000000000000027
++      }
++    },
++    {
++      "loop": 23,
++      "hypothesis": "Constrained 2-beam search decoding (num_beams=2, early_stopping=True) with repetition penalty (1.03) over calibrated acoustic preprocessing",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.06%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 1.11,
++        "cer": 0.94,
++        "sentence_em": 91.33,
++        "latency": 0.8244
++      },
++      "dev": {
++        "wer": 1.61,
++        "cer": 1.17,
++        "sentence_em": 86.96,
++        "latency": 0.7873
++      },
++      "deltas": {
++        "delta_dev_wer": 0.06000000000000005,
++        "delta_dev_cer": 0.07999999999999985,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.1200000000000001
++      }
++    },
++    {
++      "loop": 24,
++      "hypothesis": "Gentle first-order FIR pre-emphasis filtering (alpha=0.90) to boost high-frequency acoustic cues for unvoiced stops and fricatives",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.01%, delta EM=-0.34%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.88,
++        "sentence_em": 92.0,
++        "latency": 0.3642
++      },
++      "dev": {
++        "wer": 1.56,
++        "cer": 1.05,
++        "sentence_em": 86.62,
++        "latency": 0.3509
++      },
++      "deltas": {
++        "delta_dev_wer": 0.010000000000000009,
++        "delta_dev_cer": -0.040000000000000036,
++        "delta_dev_em": -0.3399999999999892,
++        "delta_train_wer": 0.0
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 68b191a..110dd3f 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -60,7 +60,7 @@ class WhisperASREngine:
+         trim_silence: bool = True,
+         vad_db_threshold: float = -35.0,
+         vad_margin_ms: float = 150.0,
+-        repetition_penalty: float = 1.03,
++        repetition_penalty: float = 1.02,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor

@@ -1,0 +1,10 @@
+{
+  "loop": 37,
+  "timestamp": "2026-11-07T02:07:06.711839",
+  "optimization_summary": "Domain Prompt Harmonization: Disambiguate conditional onset priors ('Nếu' vs 'Điều') and colloquial discourse markers",
+  "diff_stat": "configs/agent_loop_state.json | 124 +++++++++++++++++++++++++++++++++++++++++-\n src/asr/whisper_engine.py     | 114 +++++++++++++++++++++++++++++++++++++-\n 2 files changed, 234 insertions(+), 4 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "8/8 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

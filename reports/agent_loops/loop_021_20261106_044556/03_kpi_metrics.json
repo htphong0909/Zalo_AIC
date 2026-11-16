@@ -1,0 +1,24 @@
+{
+  "loop": 21,
+  "hypothesis": "Isolated neutral topic-noun prompt conditioning while strictly preserving traditional tone harmonization in ITN to capture the +1.33% EM gain without orthographic penalties.",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.19%, delta EM=-1.68%) or Train regressed",
+  "train": {
+    "wer": 0.95,
+    "cer": 0.86,
+    "sentence_em": 92.0,
+    "latency": 0.3669
+  },
+  "dev": {
+    "wer": 1.74,
+    "cer": 1.24,
+    "sentence_em": 85.28,
+    "latency": 0.3586
+  },
+  "deltas": {
+    "delta_dev_wer": 0.18999999999999995,
+    "delta_dev_cer": 0.1499999999999999,
+    "delta_dev_em": -1.6799999999999926,
+    "delta_train_wer": -0.040000000000000036
+  }
+}

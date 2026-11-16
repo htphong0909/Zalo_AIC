@@ -1,0 +1,56 @@
+# Autonomous ASR Agent Optimization Loop Dashboard
+
+> **Target Definition of Done (DoD) on Sealed Dev:** **WER $\le$ 1.50%** | **CER $\le$ 1.00%** | **Sentence EM $\ge$ 95.00%**  
+> **Status:** Current Best Loop: **#38** | Best Dev WER: **1.50%** | Best Dev EM: **86.96%**  
+> **Total Runs:** 44 (11 ACCEPTED / 33 REJECTED)
+
+---
+
+## Experiment Run History
+
+| Loop | Decision | Hypothesis | Train WER | Dev WER | Dev CER | Dev EM | Report | Patch |
+| :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| #42 | *REJECTED* | Hyper-compact Dual-Tower Acoustic LoRA (r=4,  | 0.82% | **1.50%** | 1.03% | **86.96%** | [Report](agent_loops/loop_042_20261107_100053/LOOP_REPORT.md) | [Patch](agent_loops/loop_042_20261107_100053/02_code_changes.patch) |
+| #41 | *REJECTED* | Extended Multi-Dialect Dual-Tower LoRA traini | 0.46% | **1.74%** | 1.19% | **86.96%** | [Report](agent_loops/loop_041_20261107_092250/LOOP_REPORT.md) | [Patch](agent_loops/loop_041_20261107_092250/02_code_changes.patch) |
+| #40 | *REJECTED* | Multi-Dialect Cross-Attention & Encoder LoRA  | 0.77% | **1.50%** | 1.03% | **86.96%** | [Report](agent_loops/loop_040_20261107_031956/LOOP_REPORT.md) | [Patch](agent_loops/loop_040_20261107_031956/02_code_changes.patch) |
+| #39 | *REJECTED* | Colloquial Dialectal Negation Normalization:  | 0.80% | **1.53%** | 1.04% | **85.95%** | [Report](agent_loops/loop_039_20261107_030457/LOOP_REPORT.md) | [Patch](agent_loops/loop_039_20261107_030457/02_code_changes.patch) |
+| #38 | **ACCEPTED** | Calibrated 20ms pre-roll acoustic padding ali | 0.82% | **1.50%** | 1.03% | **86.96%** | [Report](agent_loops/loop_038_20261107_022800/LOOP_REPORT.md) | [Patch](agent_loops/loop_038_20261107_022800/02_code_changes.patch) |
+| #37 | *REJECTED* | Domain Prompt Harmonization: Disambiguate con | 1.00% | **1.52%** | 1.05% | **87.29%** | [Report](agent_loops/loop_037_20261107_020108/LOOP_REPORT.md) | [Patch](agent_loops/loop_037_20261107_020108/02_code_changes.patch) |
+| #36 | *REJECTED* | Audio-Tower-Only LoRA adaptation (CLAnSR ICAS | 0.99% | **1.51%** | 1.07% | **87.63%** | [Report](agent_loops/loop_036_20261107_011753/LOOP_REPORT.md) | [Patch](agent_loops/loop_036_20261107_011753/02_code_changes.patch) |
+| #35 | *REJECTED* | Audio-Tower Latent Adaptation via Contrastive | 0.99% | **1.51%** | 1.07% | **87.63%** | [Report](agent_loops/loop_035_20261107_003819/LOOP_REPORT.md) | [Patch](agent_loops/loop_035_20261107_003819/02_code_changes.patch) |
+| #34 | *REJECTED* | Generic Levenshtein phonetic-bounded alignmen | 6.70% | **8.39%** | 5.24% | **22.07%** | [Report](agent_loops/loop_034_20261107_000450/LOOP_REPORT.md) | [Patch](agent_loops/loop_034_20261107_000450/02_code_changes.patch) |
+| #33 | *REJECTED* | Dynamic Sequence Alignment CTC anchor verific | 0.99% | **1.51%** | 1.07% | **87.63%** | [Report](agent_loops/loop_033_20261106_231555/LOOP_REPORT.md) | [Patch](agent_loops/loop_033_20261106_231555/02_code_changes.patch) |
+| #33 | *REJECTED* | Dynamic Sequence Alignment CTC anchor verific | 0.99% | **1.51%** | 1.07% | **87.63%** | [Report](agent_loops/loop_033_20261106_231555/LOOP_REPORT.md) | [Patch](agent_loops/loop_033_20261106_231555/02_code_changes.patch) |
+| #32 | **ACCEPTED** | Symmetric 170ms VAD collar (+1 encoder frame  | 0.99% | **1.51%** | 1.07% | **87.63%** | [Report](agent_loops/loop_032_20261106_105001/LOOP_REPORT.md) | [Patch](agent_loops/loop_032_20261106_105001/02_code_changes.patch) |
+| #31 | *REJECTED* | Domain loanword compound fusion (e-mail -> em | 0.99% | **1.52%** | 1.08% | **87.29%** | [Report](agent_loops/loop_031_20261106_101800/LOOP_REPORT.md) | [Patch](agent_loops/loop_031_20261106_101800/02_code_changes.patch) |
+| #30 | *REJECTED* | Extending traditional diacritic harmonization | 0.99% | **1.63%** | 1.15% | **85.95%** | [Report](agent_loops/loop_030_20261106_094115/LOOP_REPORT.md) | [Patch](agent_loops/loop_030_20261106_094115/02_code_changes.patch) |
+| #29 | *REJECTED* | Integer 4-frame acoustic collar padding (symm | 1.09% | **1.56%** | 1.09% | **87.63%** | [Report](agent_loops/loop_029_20261106_092946/LOOP_REPORT.md) | [Patch](agent_loops/loop_029_20261106_092946/02_code_changes.patch) |
+| #28 | *REJECTED* | Asymmetric VAD margin geometry (200ms pre-spe | 1.03% | **1.59%** | 1.10% | **87.63%** | [Report](agent_loops/loop_028_20261106_091807/LOOP_REPORT.md) | [Patch](agent_loops/loop_028_20261106_091807/02_code_changes.patch) |
+| #27 | *REJECTED* | Widening VAD silence margin from 150ms to 200 | 0.99% | **1.57%** | 1.10% | **87.96%** | [Report](agent_loops/loop_027_20261106_090925/LOOP_REPORT.md) | [Patch](agent_loops/loop_027_20261106_090925/02_code_changes.patch) |
+| #26 | *REJECTED* | Calibrating repetition penalty to 1.01 minimi | 0.99% | **1.52%** | 1.08% | **87.29%** | [Report](agent_loops/loop_026_20261106_085858/LOOP_REPORT.md) | [Patch](agent_loops/loop_026_20261106_085858/02_code_changes.patch) |
+| #25 | **ACCEPTED** | Relaxing autoregressive repetition penalty fr | 0.99% | **1.52%** | 1.08% | **87.29%** | [Report](agent_loops/loop_025_20261106_083916/LOOP_REPORT.md) | [Patch](agent_loops/loop_025_20261106_083916/02_code_changes.patch) |
+| #24 | *REJECTED* | Gentle first-order FIR pre-emphasis filtering | 0.99% | **1.56%** | 1.05% | **86.62%** | [Report](agent_loops/loop_024_20261106_082335/LOOP_REPORT.md) | [Patch](agent_loops/loop_024_20261106_082335/02_code_changes.patch) |
+| #23 | *REJECTED* | Constrained 2-beam search decoding (num_beams | 1.11% | **1.61%** | 1.17% | **86.96%** | [Report](agent_loops/loop_023_20261106_080444/LOOP_REPORT.md) | [Patch](agent_loops/loop_023_20261106_080444/02_code_changes.patch) |
+| #22 | *REJECTED* | Southern conversational negative particle nor | 0.96% | **1.56%** | 1.09% | **86.62%** | [Report](agent_loops/loop_022_20261106_074744/LOOP_REPORT.md) | [Patch](agent_loops/loop_022_20261106_074744/02_code_changes.patch) |
+| #21 | *REJECTED* | Isolated neutral topic-noun prompt conditioni | 0.95% | **1.74%** | 1.24% | **85.28%** | [Report](agent_loops/loop_021_20261106_044556/LOOP_REPORT.md) | [Patch](agent_loops/loop_021_20261106_044556/02_code_changes.patch) |
+| #20 | *REJECTED* | Neutral topic-noun prompt restructuring elimi | 0.92% | **1.65%** | 1.18% | **88.29%** | [Report](agent_loops/loop_020_20261106_042052/LOOP_REPORT.md) | [Patch](agent_loops/loop_020_20261106_042052/02_code_changes.patch) |
+| #19 | *REJECTED* | Deterministic decoding stabilization (conditi | 0.99% | **1.55%** | 1.09% | **86.96%** | [Report](agent_loops/loop_019_20261106_034327/LOOP_REPORT.md) | [Patch](agent_loops/loop_019_20261106_034327/02_code_changes.patch) |
+| #18 | *REJECTED* | Asymmetric acoustic collar geometry (60ms pre | 0.99% | **1.55%** | 1.09% | **86.96%** | [Report](agent_loops/loop_018_20261106_032010/LOOP_REPORT.md) | [Patch](agent_loops/loop_018_20261106_032010/02_code_changes.patch) |
+| #17 | **ACCEPTED** | Calibrated bilateral acoustic collar expansio | 0.99% | **1.55%** | 1.09% | **86.96%** | [Report](agent_loops/loop_017_20261106_030003/LOOP_REPORT.md) | [Patch](agent_loops/loop_017_20261106_030003/02_code_changes.patch) |
+| #16 | *REJECTED* | Domain-conditioned Vietnamese ITN and orthogr | 1.04% | **1.71%** | 1.16% | **84.95%** | [Report](agent_loops/loop_016_20261106_022024/LOOP_REPORT.md) | [Patch](agent_loops/loop_016_20261106_022024/02_code_changes.patch) |
+| #15 | *REJECTED* | Dynamic boundary silence trimming (-28.0 dB w | 0.99% | **1.56%** | 1.04% | **86.29%** | [Report](agent_loops/loop_015_20261106_015540/LOOP_REPORT.md) | [Patch](agent_loops/loop_015_20261106_015540/02_code_changes.patch) |
+| #14 | **ACCEPTED** | Autoregressive repetition penalty decoding (1 | 1.02% | **1.56%** | 1.05% | **86.96%** | [Report](agent_loops/loop_014_20261106_012521/LOOP_REPORT.md) | [Patch](agent_loops/loop_014_20261106_012521/02_code_changes.patch) |
+| #13 | *REJECTED* | Grounded conversational command prompting wit | 1.22% | **1.69%** | 1.21% | **86.62%** | [Report](agent_loops/loop_013_20261106_010009/LOOP_REPORT.md) | [Patch](agent_loops/loop_013_20261106_010009/02_code_changes.patch) |
+| #12 | **ACCEPTED** | Linear peak amplitude normalization to 0.95 c | 0.99% | **1.57%** | 1.09% | **87.29%** | [Report](agent_loops/loop_012_20261106_001221/LOOP_REPORT.md) | [Patch](agent_loops/loop_012_20261106_001221/02_code_changes.patch) |
+| #11 | **ACCEPTED** | Symmetric bilateral acoustic collar padding ( | 1.14% | **1.60%** | 1.08% | **86.96%** | [Report](agent_loops/loop_011_20261105_232427/LOOP_REPORT.md) | [Patch](agent_loops/loop_011_20261105_232427/02_code_changes.patch) |
+| #10 | *REJECTED* | Bilateral acoustic temporal padding (100ms pr | 1.17% | **1.65%** | 1.11% | **87.29%** | [Report](agent_loops/loop_010_20261105_223506/LOOP_REPORT.md) | [Patch](agent_loops/loop_010_20261105_223506/02_code_changes.patch) |
+| #09 | *REJECTED* | Acoustic domain LoRA adaptation (r=16, alpha= | 0.59% | **1.68%** | 1.16% | **86.96%** | [Report](agent_loops/loop_009_20261105_203300/LOOP_REPORT.md) | [Patch](agent_loops/loop_009_20261105_203300/02_code_changes.patch) |
+| #08 | *REJECTED* | Enhanced LifeMate domain entity prompt condit | 1.27% | **1.78%** | 1.18% | **83.95%** | [Report](agent_loops/loop_008_20261105_104446/LOOP_REPORT.md) | [Patch](agent_loops/loop_008_20261105_104446/02_code_changes.patch) |
+| #07 | **ACCEPTED** | Acoustic 40ms pre-roll padding, domain prompt | 1.16% | **1.61%** | 1.07% | **87.29%** | [Report](agent_loops/loop_007_20261105_095436/LOOP_REPORT.md) | [Patch](agent_loops/loop_007_20261105_095436/02_code_changes.patch) |
+| #06 | *REJECTED* | Orthographic tone harmonization (hoà/hoá/thuỷ | 1.72% | **2.16%** | 1.63% | **79.26%** | [Report](agent_loops/loop_006_20261105_060005/LOOP_REPORT.md) | [Patch](agent_loops/loop_006_20261105_060005/02_code_changes.patch) |
+| #05 | *REJECTED* | Constrained beam search decoding (num_beams=2 | 1.72% | **2.16%** | 1.63% | **79.26%** | [Report](agent_loops/loop_005_20261105_053200/LOOP_REPORT.md) | [Patch](agent_loops/loop_005_20261105_053200/02_code_changes.patch) |
+| #04 | *REJECTED* | PhoWhisper Large 80-channel feature alignment | 1.44% | **1.74%** | 1.20% | **85.62%** | [Report](agent_loops/loop_004_20261105_051407/LOOP_REPORT.md) | [Patch](agent_loops/loop_004_20261105_051407/02_code_changes.patch) |
+| #03 | **ACCEPTED** | Zalo-specialized PhoWhisper Large (1.54B) wit | 1.44% | **1.74%** | 1.20% | **85.62%** | [Report](agent_loops/loop_003_20261105_043154/LOOP_REPORT.md) | [Patch](agent_loops/loop_003_20261105_043154/02_code_changes.patch) |
+| #02 | *REJECTED* | Deterministic Vietnamese Inverse Text Normali | 29.32% | **28.24%** | 19.88% | **2.01%** | [Report](agent_loops/loop_002_20261105_040320/LOOP_REPORT.md) | [Patch](agent_loops/loop_002_20261105_040320/02_code_changes.patch) |
+| #01 | **ACCEPTED** | LoRA SFT (r=16, alpha=32) on duclvQ/qwen3-asr | 5.79% | **12.42%** | 8.99% | **24.75%** | [Report](agent_loops/loop_001_20261105_004901/LOOP_REPORT.md) | [Patch](agent_loops/loop_001_20261105_004901/02_code_changes.patch) |
+| #00 | **ACCEPTED** | Base duclvQ/qwen3-asr-1.7b-vimd-full Zero-sho | 31.23% | **28.79%** | 20.42% | **2.01%** | [Report](agent_loops/loop_000_20261105_003522/LOOP_REPORT.md) | [Patch](agent_loops/loop_000_20261105_003522/02_code_changes.patch) |

@@ -1,0 +1,24 @@
+{
+  "loop": 9,
+  "hypothesis": "Acoustic domain LoRA adaptation (r=16, alpha=32) on PhoWhisper Large targeting attention projections",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.07%, delta EM=-0.33%) or Train regressed",
+  "train": {
+    "wer": 0.59,
+    "cer": 0.47,
+    "sentence_em": 92.67,
+    "latency": 0.361
+  },
+  "dev": {
+    "wer": 1.68,
+    "cer": 1.16,
+    "sentence_em": 86.96,
+    "latency": 0.344
+  },
+  "deltas": {
+    "delta_dev_wer": 0.06999999999999984,
+    "delta_dev_cer": 0.08999999999999986,
+    "delta_dev_em": -0.3300000000000125,
+    "delta_train_wer": -0.57
+  }
+}

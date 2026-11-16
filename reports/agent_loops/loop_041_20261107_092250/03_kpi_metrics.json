@@ -1,0 +1,24 @@
+{
+  "loop": 41,
+  "hypothesis": "Extended Multi-Dialect Dual-Tower LoRA training (6 epochs, lr=1.5e-4, cosine decay) converges cross-modal acoustic grounding to generalize regional accent shifts",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.24%, delta EM=+0.00%) or Train regressed",
+  "train": {
+    "wer": 0.46,
+    "cer": 0.41,
+    "sentence_em": 93.33,
+    "latency": 0.3757
+  },
+  "dev": {
+    "wer": 1.74,
+    "cer": 1.19,
+    "sentence_em": 86.96,
+    "latency": 0.3566
+  },
+  "deltas": {
+    "delta_dev_wer": 0.24,
+    "delta_dev_cer": 0.15999999999999992,
+    "delta_dev_em": 0.0,
+    "delta_train_wer": -0.35999999999999993
+  }
+}

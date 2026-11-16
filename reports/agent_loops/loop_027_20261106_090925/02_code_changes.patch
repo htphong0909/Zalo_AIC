@@ -1,0 +1,37 @@
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 110dd3f..7bddcbe 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -58,8 +58,8 @@ class WhisperASREngine:
+         post_roll_pad_ms: float = 60.0,
+         peak_normalize: bool = True,
+         trim_silence: bool = True,
+-        vad_db_threshold: float = -35.0,
+-        vad_margin_ms: float = 150.0,
++        vad_db_threshold: float = -40.0,
++        vad_margin_ms: float = 200.0,
+         repetition_penalty: float = 1.02,
+     ):
+         import torch
+@@ -140,8 +140,8 @@ class WhisperASREngine:
+         sr: int = 16000,
+         frame_ms: float = 25.0,
+         hop_ms: float = 10.0,
+-        db_threshold: float = -35.0,
+-        margin_ms: float = 150.0,
++        db_threshold: float = -40.0,
++        margin_ms: float = 200.0,
+     ) -> np.ndarray:
+         """Conservative energy-based boundary silence trimming with safety collar.
+ 
+@@ -186,8 +186,8 @@ class WhisperASREngine:
+             waveform = self._trim_waveform_silence(
+                 waveform,
+                 sr=sr,
+-                db_threshold=getattr(self, "vad_db_threshold", -35.0),
+-                margin_ms=getattr(self, "vad_margin_ms", 150.0),
++                db_threshold=getattr(self, "vad_db_threshold", -40.0),
++                margin_ms=getattr(self, "vad_margin_ms", 200.0),
+             )
+ 
+         # 2. Peak amplitude normalization to 0.95 to optimize Mel filterbank dynamic headroom

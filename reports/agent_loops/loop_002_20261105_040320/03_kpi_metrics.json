@@ -1,0 +1,24 @@
+{
+  "loop": 2,
+  "hypothesis": "Deterministic Vietnamese Inverse Text Normalization (ITN) and orthographic diacritic harmonization",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+15.82%, delta EM=-22.74%) or Train regressed",
+  "train": {
+    "wer": 29.32,
+    "cer": 22.71,
+    "sentence_em": 2.0,
+    "latency": 0.402
+  },
+  "dev": {
+    "wer": 28.24,
+    "cer": 19.88,
+    "sentence_em": 2.01,
+    "latency": 0.3333
+  },
+  "deltas": {
+    "delta_dev_wer": 15.819999999999999,
+    "delta_dev_cer": 10.889999999999999,
+    "delta_dev_em": -22.740000000000002,
+    "delta_train_wer": 23.53
+  }
+}

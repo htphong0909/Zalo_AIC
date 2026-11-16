@@ -1,0 +1,352 @@
+[
+  {
+    "id": "train_0001",
+    "gt": "Nếu mai mưa thì dời chạy bộ muộn 1 tiếng, nhắn Sếp Dũng giờ mới; không mưa thì thôi.",
+    "pred": "Nếu mai mưa thì giờ chạy bộ muộn một tiếng, nhắn sức dũng giờ mới. Không mưa thì thôi.",
+    "wer": 15.79,
+    "cer": 12.7
+  },
+  {
+    "id": "train_0003",
+    "gt": "Ơi, nạp giúp mình 50 nghìn điện thoại cho bác Ba với chuyển ví cho cô Mai số tiền điện tháng này nhé.",
+    "pred": "Hơi, làm giúp mình năm mươi ngàn tiền điện thoại cho bác ba với chuyển ví cho con mai số tiền điện hắn này nhé.",
+    "wer": 34.78,
+    "cer": 27.27
+  },
+  {
+    "id": "train_0004",
+    "gt": "Trợ lý ơi, giảm độ sáng đèn phòng ngủ nhỏ xuống còn một nửa nhé.",
+    "pred": "Trời lý ơi, giảm độ sáng đèn phòng ngủ nhỏ xuống còn một nửa nhé.",
+    "wer": 6.67,
+    "cer": 4.17
+  },
+  {
+    "id": "train_0006",
+    "gt": "Nếu giá mua vào vàng SJC hôm nay dưới 123 triệu thì 9 giờ sáng mai nhắc tôi đi mua nhé.",
+    "pred": "Điều đã thu mua vào khoảng chín sáu hôm nay rưỡi một trăm hai mươi ba triệu khi chỉnh cho sáng mai nhắc tôi đi mua nhỉ.",
+    "wer": 76.19,
+    "cer": 71.21
+  },
+  {
+    "id": "train_0008",
+    "gt": "Cái còn lại nếu mai mưa thì dời muộn nửa tiếng, không mưa giữ nguyên.",
+    "pred": "Cái còn lại nếu may mưa thì dời muộn nửa tiếng, không mưa giữ nguyên.",
+    "wer": 6.67,
+    "cer": 1.89
+  },
+  {
+    "id": "train_0009",
+    "gt": "Nạp dùm em Linh 50 ngàn cho số không chín năm không năm ba sáu không ba sáu bảy nha.",
+    "pred": "Đặt chung cho em Linh năm mươi ngàn cho số chín năm ba sáu bảy nha.",
+    "wer": 55.0,
+    "cer": 62.5
+  },
+  {
+    "id": "train_0011",
+    "gt": "Nếu ví đủ thì trả điện và nhắn Bố là đã đóng, còn không thì trả ngân hàng và nhắc tôi tám giờ tối nay nạp tiền vào ví nhé.",
+    "pred": "Nếu ví đủ thì trả điện và nhắn bố là đã đóng. Còn không thì trả ngân hàng và nhắc tôi tám giờ tối nay nạp tiền vào ví nha.",
+    "wer": 3.33,
+    "cer": 1.1
+  },
+  {
+    "id": "train_0015",
+    "gt": "Chuyển tiền mạng tháng này cho chú Phạm Hùng nha, nếu tài khoản thanh toán không đủ thì lấy từ tiết kiệm dùm tôi hen.",
+    "pred": "Trên trang mạng sáng nay cho chú Phạm Hồng Nha, nếu tài khoản thanh toán hôm nay sẽ lấy từ tiết kiệm hôm tối em.",
+    "wer": 44.0,
+    "cer": 27.47
+  },
+  {
+    "id": "train_0016",
+    "gt": "Ờ à, nếu mai mưa thì dời lịch đá bóng sáng mai muộn hai tiếng với nhắn SMS cho Mẹ báo giờ mới, còn không mưa thì thôi nhé.",
+    "pred": "Nếu mai mưa thì giờ là trao bóng sáng mai muộn hai tiếng với nhắn SMS cho mẹ là báo giờ mới. Còn không mưa thì thôi.",
+    "wer": 24.14,
+    "cer": 16.48
+  },
+  {
+    "id": "train_0017",
+    "gt": "Ơi, chuyển sang kênh S+ Sport dùm em nha.",
+    "pred": "ơi, chuyển sang kênh S trong Sports Premium nha.",
+    "wer": 33.33,
+    "cer": 36.67
+  },
+  {
+    "id": "train_0019",
+    "gt": "Chị ơi, giúp tôi đặt phòng khách sạn ở Đà Lạt với nhé.",
+    "pred": "Chào anh, tôi cần đặt phòng khách sạn ở Đà Lạt với nhé.",
+    "wer": 30.77,
+    "cer": 25.0
+  },
+  {
+    "id": "train_0020",
+    "gt": "Ờ à, tắt hết đèn tầng 2 giúp em nhé, trừ phòng nào đang bật điều hoà thì cứ để nguyên.",
+    "pred": "Tắt hết đèn tầng hai giúp em nhé. Cứ để nguyên.",
+    "wer": 52.38,
+    "cer": 52.38
+  },
+  {
+    "id": "train_0025",
+    "gt": "Nếu mai mưa thì huỷ lịch đá bóng sáng mai với gọi cho bạn Minh nhé, còn không mưa thì thôi ạ.",
+    "pred": "Nếu mai mưa thì nghỉ trực đá bóng, sáng mai cứ lại cho đánh ván nhé. Còn hôm nay trời xoay.",
+    "wer": 50.0,
+    "cer": 42.86
+  },
+  {
+    "id": "train_0026",
+    "gt": "Trợ lý ơi, dời lịch cà phê với gia đình mai muộn hơn một tiếng giúp mình nhé.",
+    "pred": "Chở đi hơi, dì lật trà phê với gia đình mang mũ hoa một chín giúp mình nhé.",
+    "wer": 55.56,
+    "cer": 39.66
+  },
+  {
+    "id": "train_0027",
+    "gt": "Nhắc dùm chị ra sân bay lúc 8 giờ kém 15 tối mai nha.",
+    "pred": "Nhạc Chung Chi đã sinh ra lúc tám chín mười lăm tuổi mãi nhé.",
+    "wer": 92.86,
+    "cer": 76.92
+  },
+  {
+    "id": "train_0028",
+    "gt": "Đặt báo thức cho chị một tiếng trước lịch họp team ngày 19 nhé.",
+    "pred": "Đặt báo thức cho chị một tiếng cho lịch họp team ngày mười chín nhé.",
+    "wer": 21.43,
+    "cer": 26.53
+  },
+  {
+    "id": "train_0030",
+    "gt": "Ơi, chuyển giúp tôi một triệu hai cho chủ nhà Phạm Hùng nhé.",
+    "pred": "Chị ơi, chị giúp tao một triệu hai cho chủ nhà phạm hùng nè.",
+    "wer": 30.77,
+    "cer": 23.91
+  },
+  {
+    "id": "train_0032",
+    "gt": "Chuyển dùm tui cho anh Trần Văn Tuấn số tiền truyền hình tháng này nha.",
+    "pred": "Truyền giùm tôi cho anh Trần Hoàng Trung số tiền truyền hình tháng này nha.",
+    "wer": 33.33,
+    "cer": 23.21
+  },
+  {
+    "id": "train_0033",
+    "gt": "Đặt giúp chị báo thức trước lịch họp team mai 2 tiếng nhé.",
+    "pred": "Gặp chú chị, bảo thức trước lịch học thêm mai hai tiếng nhé.",
+    "wer": 46.15,
+    "cer": 26.67
+  },
+  {
+    "id": "train_0034",
+    "gt": "Ờ à, nhắn qua Zalo cho bác Ba là tối nay ăn cơm ở nhà nhé.",
+    "pred": "Nhận qua xa lô sau bắc ba là tối nay ăn cơm ở nhà nhé.",
+    "wer": 43.75,
+    "cer": 21.95
+  },
+  {
+    "id": "train_0035",
+    "gt": "Bạn ơi, tắt đèn phòng khách giúp tôi nhé.",
+    "pred": "Bà nữ thắp đèn phòng khách giúp tôi nhẹ.",
+    "wer": 44.44,
+    "cer": 19.35
+  },
+  {
+    "id": "train_0036",
+    "gt": "Tắt đèn phòng làm việc đi à thôi khỏi, không cần.",
+    "pred": "Chắc em không làm việc đi, anh hơi khỏi không chừng.",
+    "wer": 54.55,
+    "cer": 40.54
+  },
+  {
+    "id": "train_0037",
+    "gt": "Nếu mai mưa thì huỷ giúp tôi lịch đi chơi công viên sáng mai nhé.",
+    "pred": "Nếu mà hơi thì là hãy giúp tôi đặt đi chơi công viên sáng nay.",
+    "wer": 46.67,
+    "cer": 36.0
+  },
+  {
+    "id": "train_0038",
+    "gt": "Em ơi, đừng tắt đèn bếp nhé, cứ để đó.",
+    "pred": "Em ơi, đừng đắp bếp nhé, cứ để đó.",
+    "wer": 20.0,
+    "cer": 19.23
+  },
+  {
+    "id": "train_0039",
+    "gt": "Ờ, à, nhắn qua Zalo cho Minh là tối nay ăn cơm ở nhà nhé.",
+    "pred": "À, ạ, cháu qua giao lưu cho mình là tối nay anh không ở nhà gì.",
+    "wer": 60.0,
+    "cer": 52.5
+  },
+  {
+    "id": "train_0042",
+    "gt": "Đặt báo thức 6 rưỡi sáng mai với gọi cho Minh giúp tôi nhé.",
+    "pred": "Đặt báo thức sáu lũy sáng mai với gọi cho mình giúp tôi nhé.",
+    "wer": 21.43,
+    "cer": 15.56
+  },
+  {
+    "id": "train_0043",
+    "gt": "Trợ lý ơi, đặt dùm em chiếc xe ra sân bay nha.",
+    "pred": "Cháu đi ơi, đặc biệt em chỉ xe ra sân bay nhé.",
+    "wer": 50.0,
+    "cer": 45.45
+  },
+  {
+    "id": "train_0046",
+    "gt": "Nếu ví đủ thì trả tiền truyền hình và nhắn Hương là đã đóng, còn không thì trả bằng ngân hàng và nhắc tôi tám giờ tối nay nạp tiền nhé.",
+    "pred": "Nơi viên trụ thị trấn Tiền Trình gần với Nhân Hương đã đóng khống công thị trấn bằng ngân hàng và nhắc tôi tản ra tới nay là tiền lĩnh chiết.",
+    "wer": 64.52,
+    "cer": 44.66
+  },
+  {
+    "id": "train_0047",
+    "gt": "Tắt đèn phòng ngủ đi ơi... ờ à mà thôi, không phải, tắt đèn bếp giúp chị nhé.",
+    "pred": "Chắc đem phương ngụ đi ơi. Làm mà xui, không xài đúng không? Chắc đem bẹp chúc chi nghe.",
+    "wer": 88.89,
+    "cer": 66.67
+  },
+  {
+    "id": "train_0048",
+    "gt": "Ờ à, gọi cho Lan nhé.",
+    "pred": "À à, gọi cho Lan nhé.",
+    "wer": 16.67,
+    "cer": 7.14
+  },
+  {
+    "id": "train_0049",
+    "gt": "Ờ à, chuyển tiền mạng tháng này cho chủ nhà Phạm Hùng nhé, nếu tài khoản thanh toán không đủ thì lấy từ tiết kiệm giúp tôi.",
+    "pred": "Chuyến tìm mảnh thế này cho chủ nhà Phạm Hoàng Nghĩa đã trải qua rất khó đỗi thì lấy từ thiện giúp tôi.",
+    "wer": 62.96,
+    "cer": 43.62
+  },
+  {
+    "id": "train_0050",
+    "gt": "Alô, cho em Linh hỏi giá vàng SJC hôm nay bao nhiêu dùm nha.",
+    "pred": "Alô, cho em linh hỏi giá vé F C C hôm nay có nhiều dòng nhau.",
+    "wer": 57.14,
+    "cer": 28.89
+  },
+  {
+    "id": "train_0052",
+    "gt": "Đặt báo thức 6 rưỡi sáng mai và gọi cho Minh giúp tôi.",
+    "pred": "Đặt bão thức sáu rưỡi sáng mai và gọi cho mình giúp tôi.",
+    "wer": 23.08,
+    "cer": 12.2
+  },
+  {
+    "id": "train_0055",
+    "gt": "Tắt hết đèn tầng 2, trừ phòng nào đang bật điều hoà thì để nguyên nhé.",
+    "pred": "Tắt hết đèn tầng hai, truy phòng nào đang bật điều hòa thì để nguyên nhé.",
+    "wer": 18.75,
+    "cer": 13.21
+  },
+  {
+    "id": "train_0059",
+    "gt": "Trợ lý ơi, xem giúp tôi tiền điện tháng này bao nhiêu rồi thanh toán bằng ví, nếu thiếu thì trừ luôn qua ngân hàng nhé.",
+    "pred": "Chờ lì ơi, sáng giúp tôi trên điện thoại này bao nhiêu rồi thanh toán bằng ví. Nếu thiếu thì trừ luôn qua ngân hàng nhé.",
+    "wer": 19.23,
+    "cer": 14.29
+  },
+  {
+    "id": "train_0060",
+    "gt": "Đặt giùm tui báo thức 7 rưỡi sáng mai nha.",
+    "pred": "Đặt dùm tôi báo thức bảy rưỡi sáng mai nhé.",
+    "wer": 40.0,
+    "cer": 21.88
+  },
+  {
+    "id": "train_0061",
+    "gt": "Nhắc mình gọi lại cho khách lúc 9 giờ kém 15 tối mai nhé.",
+    "pred": "Giác mình gọi lại cho khách lúc chín giờ kém mười lăm tối nay nhé.",
+    "wer": 35.71,
+    "cer": 37.21
+  },
+  {
+    "id": "train_0062",
+    "gt": "Nhắn qua Zalo cho Minh là đến rồi thì gọi tôi nhé.",
+    "pred": "Nhãn Wezelo Cha Minh là đến rồi, thì gọi tôi nhé.",
+    "wer": 33.33,
+    "cer": 15.79
+  },
+  {
+    "id": "train_0063",
+    "gt": "Nhắn tin cho Minh: nhớ mang tài liệu.",
+    "pred": "Nhắn tin cho mình, gửi mang tài liệu.",
+    "wer": 25.0,
+    "cer": 14.29
+  },
+  {
+    "id": "train_0064",
+    "gt": "Ơi, giúp tôi thanh toán tiền điện bằng ví nhé, à mà ví không đủ thì trừ qua ngân hàng giùm luôn nha.",
+    "pred": "ơi, giúp tôi thanh toán tiền điện bằng ví nhé. À mà ví không đủ thì rồi qua ngân hàng dùng luôn nha.",
+    "wer": 8.7,
+    "cer": 9.33
+  },
+  {
+    "id": "train_0065",
+    "gt": "Nếu mai mưa thì huỷ lịch đá bóng sáng mai và gọi báo cho Lan, không mưa thì thôi.",
+    "pred": "Nếu mai mưa thì hủy lịch đá bóng sáng mai và gọi bảo cho lan. Không mưa thì thôi.",
+    "wer": 10.53,
+    "cer": 4.92
+  },
+  {
+    "id": "train_0066",
+    "gt": "Nhắc mình gọi lại cho khách lúc 9 giờ kém 15 tối mai nhé.",
+    "pred": "Giác mình gọi lại cho khách lúc chín giờ kém mười lăm tối nay nhé.",
+    "wer": 35.71,
+    "cer": 37.21
+  },
+  {
+    "id": "train_0068",
+    "gt": "Đặt báo thức 6 giờ sáng mai với gọi cho Minh nhé.",
+    "pred": "Đặt báo hết sáu giờ sáng mai. Phải gọi cho mày nghe.",
+    "wer": 41.67,
+    "cer": 37.84
+  },
+  {
+    "id": "train_0069",
+    "gt": "Tắt đèn phòng ngủ nhỏ giúp chị, rồi gửi tin nhắn cho Hương là nhớ mang hộ cái sạc nhé.",
+    "pred": "Tắt đèn phòng ngủ nhỏ chỉ với rồi gửi cái tin nhắn cho Hướng là nhớ mang hồ cốc sáng nghe.",
+    "wer": 40.0,
+    "cer": 29.23
+  },
+  {
+    "id": "train_0070",
+    "gt": "Đặt xe bốn chỗ từ công ty tới chỗ hẹn cà phê với gia đình chiều nay, đón trước giờ hẹn nửa tiếng, nhắc tôi mang laptop trước lúc xe đón mười lăm phút.",
+    "pred": "Đặt xe bốn chỗ từ công ty tới chỗ hẹn cà phê với gia đình chiều nay. Hắn trước giờ nửa tiếng. Nhắc tôi mang laptop trước lúc xe đón mười lăm phút.",
+    "wer": 5.88,
+    "cer": 4.39
+  },
+  {
+    "id": "train_0071",
+    "gt": "Đặt báo thức năm giờ sáng mai cho em, rồi chuyển ví cho bố em chút tiền nhé.",
+    "pred": "Đảm bảo thất năm cho sáng mai cho em và chuyển quỹ cho bố em chút tiền nhé.",
+    "wer": 33.33,
+    "cer": 24.56
+  },
+  {
+    "id": "train_0072",
+    "gt": "Vàng SJC bán ra trên 127 triệu thì nhắc anh 9 giờ sáng mai đi bán vàng, không thì chuyển 2 triệu từ tài khoản thanh toán cho chủ nhà Phạm Hùng, tiền góp mua vàng.",
+    "pred": "Vàng SJC bán ra trên một trăm hai mươi bảy triệu thì nếu anh chín giờ sáng mai đi bán vàng không thì chuyển hai triệu từ tài khoản thanh toán cho chủ nhà Phạm Hùng chuyển góp mua vàng",
+    "wer": 25.0,
+    "cer": 25.81
+  },
+  {
+    "id": "train_0074",
+    "gt": "Nếu ví đủ thì trả tiền nước bằng ví và nhắn SMS cho cô giáo Mai là đóng rồi, còn thiếu thì trả bằng ngân hàng và 8 giờ tối nay nhắc tôi nạp ví.",
+    "pred": "Nếu mà ví đủ tiền thì trả tiền nước bằng ví. Bạn nhắn SMS cho cô giáo mai là đóng rồi. Còn thiếu thì trả bằng ngân hàng. Tám giờ tối nay nhắc tôi nạp ví.",
+    "wer": 14.29,
+    "cer": 11.21
+  },
+  {
+    "id": "train_0076",
+    "gt": "Đặt xe bốn chỗ từ công ty đến chỗ hẹn cà phê với gia đình chiều nay, đón sớm bốn mươi lăm phút, nhắc tôi mang laptop trước giờ xe đón mười lăm phút.",
+    "pred": "Đặt xe bấm cho người công ty đến chỗ hành khách xe với gia đình chuyến này. Tám giờ bốn mươi lăm phút. Nhắc tôi mai lắp tác trước giờ xe bấm mười lăm phút.",
+    "wer": 41.18,
+    "cer": 31.25
+  },
+  {
+    "id": "train_0079",
+    "gt": "Mấy hoá đơn đến hạn trong năm ngày tới thì trả bằng ngân hàng hết, mà cái nào trên 500 nghìn thì để lại đó chưa trả nhé.",
+    "pred": "Mấy hóa đơn đến hạn trong năm ngày tới thì sẽ bằng đơn hàng hết. Mà cái nào trên năm trăm ngàn thì để lại đó chưa trả nha.",
+    "wer": 25.0,
+    "cer": 19.78
+  }
+]

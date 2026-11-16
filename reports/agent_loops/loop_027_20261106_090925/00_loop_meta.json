@@ -1,0 +1,8 @@
+{
+  "loop": 27,
+  "hypothesis": "Widening VAD silence margin from 150ms to 200ms and relaxing energy threshold from -35dB to -40dB preserves low-energy acoustic onsets without boundary clipping",
+  "start_time": "2026-11-06T09:09:25.844122",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "loop-researcher"
+}

@@ -1,0 +1,36 @@
+name: e2e_phowhisper_qwen38_4b_distill
+seed: 42
+
+asr:
+  engine: whisper
+  model_id: kzap201/phowhisper-large-zaloai
+  language: vi
+  task: transcribe
+  dtype: float16
+  enable_itn: true
+  batch_size: 8
+
+llm:
+  backend: vllm
+  model_id: empero-ai/Qwen3.8-4B-Distill
+  adapter_path: null
+  max_model_len: 16384
+  max_new_tokens: 384
+  enable_thinking: false
+  dtype: bfloat16
+  repetition_penalty: 1.05
+  gpu_memory_utilization: 0.85
+
+agent:
+  prompt_style: qwen35
+  tool_selector: installed_apps
+  max_steps: 10
+  max_repairs: 2
+  timeout_s: 25.0
+  max_prompt_tokens: 15000
+  max_result_chars: 1500
+  guardrails:
+    enable_xref_guard: true
+    enable_arg_sanitizer: true
+    enable_ask_guard: true
+    enable_boundary_verifier: true

@@ -1,0 +1,10 @@
+{
+  "loop": 2,
+  "timestamp": "2026-11-05T04:21:08.101054",
+  "optimization_summary": "Deterministic Vietnamese Inverse Text Normalization (ITN) and orthographic diacritic harmonization",
+  "diff_stat": "configs/agent_loop_state.json                 | 40 +++++++++++++++++++++------\n configs/e2e_qwen3_asr_17b_lora_qwen35_4b.yaml |  1 +\n src/asr/__init__.py                           | 12 ++++++++\n src/asr/base.py                               | 16 +++++++++--\n src/asr/qwen_asr.py                           |  5 ++++\n src/asr/whisper_engine.py                     |  5 ++++\n 6 files changed, 69 insertions(+), 10 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "73/73 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

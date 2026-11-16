@@ -1,0 +1,191 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 6973b46..a5c58c2 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,13 +1,13 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 0,
+-  "best_dev_wer": 28.79,
+-  "best_dev_cer": 20.42,
+-  "best_dev_em": 2.01,
+-  "best_train_wer": 31.23,
+-  "best_train_em": 2.0,
+-  "total_loops": 1,
+-  "accepted_loops": 1,
++  "current_best_loop": 1,
++  "best_dev_wer": 12.42,
++  "best_dev_cer": 8.99,
++  "best_dev_em": 24.75,
++  "best_train_wer": 5.79,
++  "best_train_em": 44.67,
++  "total_loops": 2,
++  "accepted_loops": 2,
+   "rejected_loops": 0,
+   "history": [
+     {
+@@ -33,6 +33,30 @@
+         "delta_dev_em": 0.0,
+         "delta_train_wer": 0.0
+       }
++    },
++    {
++      "loop": 1,
++      "hypothesis": "LoRA SFT (r=16, alpha=32) on duclvQ/qwen3-asr-1.7b-vimd-full with LifeMate train audio (4042 clips)",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-16.37%) or EM improved (+22.74%) without train collapse",
++      "train": {
++        "wer": 5.79,
++        "cer": 4.9,
++        "sentence_em": 44.67,
++        "latency": 0.3311
++      },
++      "dev": {
++        "wer": 12.42,
++        "cer": 8.99,
++        "sentence_em": 24.75,
++        "latency": 0.3299
++      },
++      "deltas": {
++        "delta_dev_wer": -16.369999999999997,
++        "delta_dev_cer": -11.430000000000001,
++        "delta_dev_em": 22.740000000000002,
++        "delta_train_wer": -25.44
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/configs/e2e_qwen3_asr_17b_lora_qwen35_4b.yaml b/configs/e2e_qwen3_asr_17b_lora_qwen35_4b.yaml
+index 4f30f5e..3a63d49 100644
+--- a/configs/e2e_qwen3_asr_17b_lora_qwen35_4b.yaml
++++ b/configs/e2e_qwen3_asr_17b_lora_qwen35_4b.yaml
+@@ -8,6 +8,7 @@ asr:
+   language: vi
+   dtype: bfloat16
+   batch_size: 8
++  enable_itn: true
+ 
+ llm:
+   backend: transformers
+diff --git a/src/asr/__init__.py b/src/asr/__init__.py
+index e69de29..47d0550 100644
+--- a/src/asr/__init__.py
++++ b/src/asr/__init__.py
+@@ -0,0 +1,12 @@
++"""Speech recognition module."""
++from src.asr.base import ASREngine, ASRResult, FakeASREngine, strip_asr_tags
++from src.asr.itn import inverse_text_normalize, parse_vi_numeral
++
++__all__ = [
++    "ASREngine",
++    "ASRResult",
++    "FakeASREngine",
++    "strip_asr_tags",
++    "inverse_text_normalize",
++    "parse_vi_numeral",
++]
+diff --git a/src/asr/base.py b/src/asr/base.py
+index 279453e..2dfe2f1 100644
+--- a/src/asr/base.py
++++ b/src/asr/base.py
+@@ -33,11 +33,23 @@ def strip_asr_tags(raw: str) -> str:
+ class FakeASREngine:
+     """Deterministic lookup-based ASR engine for unit testing."""
+ 
+-    def __init__(self, mapping: dict[str, str] | None = None, default_text: str = ""):
++    def __init__(
++        self,
++        mapping: dict[str, str] | None = None,
++        default_text: str = "",
++        enable_itn: bool = False,
++    ):
+         self.mapping = dict(mapping or {})
+         self.default_text = default_text
++        self.enable_itn = enable_itn
+ 
+     def transcribe(self, audio_path: str | Path) -> ASRResult:
+         key = Path(audio_path).name
+         raw = self.mapping.get(str(audio_path), self.mapping.get(key, self.default_text))
+-        return ASRResult(text=strip_asr_tags(raw), raw_text=raw, latency_s=0.0)
++        text = strip_asr_tags(raw)
++        if self.enable_itn:
++            from src.asr.itn import inverse_text_normalize
++
++            text = inverse_text_normalize(text)
++        return ASRResult(text=text, raw_text=raw, latency_s=0.0)
++
+diff --git a/src/asr/qwen_asr.py b/src/asr/qwen_asr.py
+index 1e93f8c..8020816 100644
+--- a/src/asr/qwen_asr.py
++++ b/src/asr/qwen_asr.py
+@@ -6,6 +6,7 @@ from pathlib import Path
+ 
+ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
++from src.asr.itn import inverse_text_normalize
+ 
+ DEFAULT_VI_ASR_SYSTEM_PROMPT = (
+     "Trợ lý ảo tiếng Việt hỗ trợ điều khiển nhà thông minh, đặt báo thức, nhắc nhở, lịch, "
+@@ -41,6 +42,7 @@ class Qwen3ASREngine:
+         max_new_tokens: int = 256,
+         system_prompt: str = DEFAULT_VI_ASR_SYSTEM_PROMPT,
+         force_vi_prefix: bool = True,
++        enable_itn: bool = True,
+     ):
+         import torch
+         from transformers import AutoModelForSeq2SeqLM, AutoProcessor
+@@ -51,6 +53,7 @@ class Qwen3ASREngine:
+         self.max_new_tokens = max_new_tokens
+         self.system_prompt = system_prompt
+         self.force_vi_prefix = force_vi_prefix
++        self.enable_itn = enable_itn
+         self.processor = AutoProcessor.from_pretrained(adapter_path or model_id)
+         base_model = AutoModelForSeq2SeqLM.from_pretrained(
+             model_id,
+@@ -102,6 +105,8 @@ class Qwen3ASREngine:
+         gen_ids = out_ids[:, prompt_len:] if prompt_len and out_ids.shape[1] > prompt_len else out_ids
+         raw_text = self.processor.batch_decode(gen_ids, skip_special_tokens=True)[0]
+         clean_text = strip_asr_tags(raw_text)
++        if self.enable_itn:
++            clean_text = inverse_text_normalize(clean_text)
+         return ASRResult(
+             text=clean_text,
+             raw_text=raw_text,
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index c43a14b..a451c55 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -7,6 +7,7 @@ from pathlib import Path
+ 
+ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
++from src.asr.itn import inverse_text_normalize
+ 
+ 
+ class WhisperASREngine:
+@@ -20,6 +21,7 @@ class WhisperASREngine:
+         dtype: str = "float16",
+         language: str = "vi",
+         task: str = "transcribe",
++        enable_itn: bool = True,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -34,6 +36,7 @@ class WhisperASREngine:
+         self.torch_dtype = torch_dtype
+         self.language = language
+         self.task = task
++        self.enable_itn = enable_itn
+ 
+         self.processor = AutoProcessor.from_pretrained(model_id)
+         self.model = AutoModelForSpeechSeq2Seq.from_pretrained(
+@@ -80,6 +83,8 @@ class WhisperASREngine:
+         raw_text = self.processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+         clean_text = strip_asr_tags(raw_text)
+         clean_text = unicodedata.normalize("NFC", clean_text).strip()
++        if self.enable_itn:
++            clean_text = inverse_text_normalize(clean_text)
+ 
+         return ASRResult(
+             text=clean_text,

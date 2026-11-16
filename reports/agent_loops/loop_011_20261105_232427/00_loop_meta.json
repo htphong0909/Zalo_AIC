@@ -1,0 +1,8 @@
+{
+  "loop": 11,
+  "hypothesis": "Symmetric bilateral acoustic collar padding (40ms pre + 40ms post), prompt entity de-biasing, and financial dialect ITN recovery",
+  "start_time": "2026-11-05T23:24:27.032884",
+  "status": "RUNNING",
+  "current_phase": "2_refactor",
+  "agent": "loop-researcher"
+}

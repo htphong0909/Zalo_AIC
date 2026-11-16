@@ -1,0 +1,24 @@
+{
+  "loop": 25,
+  "hypothesis": "Relaxing autoregressive repetition penalty from 1.03 to 1.02 eliminates false-positive logit suppression on legitimate Vietnamese intra-sentence word repetitions",
+  "decision": "ACCEPTED",
+  "reason": "Dev WER improved (-0.03%) or EM improved (+0.33%) without train collapse",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.86,
+    "sentence_em": 92.0,
+    "latency": 0.3638
+  },
+  "dev": {
+    "wer": 1.52,
+    "cer": 1.08,
+    "sentence_em": 87.29,
+    "latency": 0.3486
+  },
+  "deltas": {
+    "delta_dev_wer": -0.030000000000000027,
+    "delta_dev_cer": -0.010000000000000009,
+    "delta_dev_em": 0.3300000000000125,
+    "delta_train_wer": 0.0
+  }
+}

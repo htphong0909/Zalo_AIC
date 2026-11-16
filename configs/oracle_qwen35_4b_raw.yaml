@@ -1,0 +1,31 @@
+name: oracle_qwen35_4b_raw
+seed: 42
+
+asr:
+  engine: oracle
+  model_id: Qwen/Qwen3-ASR-0.6B-hf
+  language: vi
+  dtype: bfloat16
+  batch_size: 8
+
+llm:
+  backend: transformers
+  model_id: Qwen/Qwen3.5-4B
+  adapter_path: null
+  max_model_len: 16384
+  max_new_tokens: 384
+  enable_thinking: false
+  dtype: bfloat16
+
+agent:
+  prompt_style: v1
+  tool_selector: installed_apps
+  max_steps: 8
+  max_repairs: 2
+  timeout_s: 25.0
+  max_prompt_tokens: 12000
+  max_result_chars: 1500
+  guardrails:
+    enable_xref_guard: false
+    enable_arg_sanitizer: false
+    enable_ask_guard: false

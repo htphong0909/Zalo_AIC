@@ -1,0 +1,10 @@
+{
+  "loop": 28,
+  "timestamp": "2026-11-06T09:24:31.459296",
+  "optimization_summary": "Asymmetric VAD trimming: vad_pre_margin_ms=200.0, vad_post_margin_ms=120.0, vad_db_threshold=-35.0",
+  "diff_stat": "src/asr/whisper_engine.py | 26 +++++++++++++++++++-------\n 1 file changed, 19 insertions(+), 7 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "68/68 passed",
+  "audit_passed": true,
+  "audit_notes": "Clean signal-level asymmetric VAD margins, zero dev leak, size budget ok"
+}

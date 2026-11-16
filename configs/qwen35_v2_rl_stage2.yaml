@@ -1,0 +1,54 @@
+base_model_id: /content/models/qwen35_4b_sft_v2_merged
+base_hf_repo: htphong0909/zalo-aic-sft-checkpoints
+base_hf_path: exp_qwen35_sft_v2/merged
+hf_repo: htphong0909/zalo-aic-rl-checkpoints
+hf_private: false
+hf_prefix: exp_qwen35_v2_rl/stage2
+
+train_split: train
+root: /content/data
+train_ids: configs/splits/folds_1_to_4_ids.json
+val_ids: configs/splits/fold_0_ids.json
+asr_cache: /content/folds1_4_phowhisper_3beam_nbest.jsonl
+asr_cache_hf: exp_qwen35_v2_rl/asr_cache/folds1_4_phowhisper_3beam_nbest.jsonl
+output_dir: /content/experiments/exp_qwen35_v2_rl/stage2
+stage: rl_gigpo_gspo
+seed: 42
+
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.0
+
+rollout:
+  batch_size: 4
+  group_size: 4
+  max_gen_batches: 4
+  max_steps: 8
+  max_new_tokens: 384
+  temperature: 0.85
+  top_p: 0.95
+  asr_mix_prob: 0.40
+  arpo_entropy_thresh: 0.45
+  omega: 0.8
+  gamma: 0.95
+  remove_std: true
+  gcp_batch_size: 24
+  gen_micro_batch_size: 24
+  use_vllm_gcp: true
+  use_vllm_rl: true
+
+optim:
+  total_steps: 60
+  mini_batch_size: 16
+  lr: 1.0e-6
+  warmup_steps: 8
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  clip_low: 0.20
+  clip_high: 0.28
+  kl_coef: 0.002
+  save_steps: 10
+  sync_interval_s: 300
+  gcp_sync_interval_s: 120
+  max_wall_minutes: 45

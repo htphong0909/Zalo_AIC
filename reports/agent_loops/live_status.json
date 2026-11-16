@@ -1,0 +1,14 @@
+{
+  "updated_at": "2026-11-07T10:16:23.062202",
+  "active_loop": 42,
+  "phase": "idle",
+  "phase_label": "Idle / Completed",
+  "hypothesis": "Hyper-compact Dual-Tower Acoustic LoRA (r=4, alpha=8, dropout=0.1, lr=8e-5, 3 epochs, weight_decay=0.01) regularizes phonetic cross-attention to prevent speaker memorization while grounding regional dialect shifts",
+  "active_agent": "",
+  "details": "Loop 42 REJECTED: Dev WER=1.50%, EM=86.96%",
+  "best_dev_wer": 1.5,
+  "best_dev_cer": 1.03,
+  "best_dev_em": 86.96,
+  "accepted_loops": 11,
+  "rejected_loops": 33
+}

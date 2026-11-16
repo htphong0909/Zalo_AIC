@@ -1,0 +1,24 @@
+{
+  "loop": 34,
+  "hypothesis": "Generic Levenshtein phonetic-bounded alignment and flanked single-syllable recovery with strict entity immunity (PY-GEC ICASSP 2025)",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+6.88%, delta EM=-65.56%) or Train regressed",
+  "train": {
+    "wer": 6.7,
+    "cer": 4.4,
+    "sentence_em": 25.33,
+    "latency": 0.3701
+  },
+  "dev": {
+    "wer": 8.39,
+    "cer": 5.24,
+    "sentence_em": 22.07,
+    "latency": 0.3527
+  },
+  "deltas": {
+    "delta_dev_wer": 6.880000000000001,
+    "delta_dev_cer": 4.17,
+    "delta_dev_em": -65.56,
+    "delta_train_wer": 5.71
+  }
+}

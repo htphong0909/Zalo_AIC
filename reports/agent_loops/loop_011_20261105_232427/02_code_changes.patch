@@ -1,0 +1,214 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 671801e..5e9e7c8 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 3,
+-  "best_dev_wer": 1.74,
+-  "best_dev_cer": 1.2,
+-  "best_dev_em": 85.62,
+-  "best_train_wer": 1.44,
+-  "best_train_em": 88.67,
+-  "total_loops": 7,
+-  "accepted_loops": 3,
+-  "rejected_loops": 4,
++  "current_best_loop": 7,
++  "best_dev_wer": 1.61,
++  "best_dev_cer": 1.07,
++  "best_dev_em": 87.29,
++  "best_train_wer": 1.16,
++  "best_train_em": 90.67,
++  "total_loops": 11,
++  "accepted_loops": 4,
++  "rejected_loops": 7,
+   "history": [
+     {
+       "loop": 0,
+@@ -177,6 +177,102 @@
+         "delta_dev_em": -6.359999999999999,
+         "delta_train_wer": 0.28
+       }
++    },
++    {
++      "loop": 7,
++      "hypothesis": "Acoustic 40ms pre-roll padding, domain prompt bleed suppression, and traditional tone harmonization",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.13%) or EM improved (+1.67%) without train collapse",
++      "train": {
++        "wer": 1.16,
++        "cer": 0.97,
++        "sentence_em": 90.67,
++        "latency": 0.4596
++      },
++      "dev": {
++        "wer": 1.61,
++        "cer": 1.07,
++        "sentence_em": 87.29,
++        "latency": 0.4639
++      },
++      "deltas": {
++        "delta_dev_wer": -0.1299999999999999,
++        "delta_dev_cer": -0.1299999999999999,
++        "delta_dev_em": 1.6700000000000017,
++        "delta_train_wer": -0.28
++      }
++    },
++    {
++      "loop": 8,
++      "hypothesis": "Enhanced LifeMate domain entity prompt conditioning with selective tone conflict de-biasing",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.17%, delta EM=-3.34%) or Train regressed",
++      "train": {
++        "wer": 1.27,
++        "cer": 1.06,
++        "sentence_em": 89.33,
++        "latency": 0.5082
++      },
++      "dev": {
++        "wer": 1.78,
++        "cer": 1.18,
++        "sentence_em": 83.95,
++        "latency": 0.4839
++      },
++      "deltas": {
++        "delta_dev_wer": 0.16999999999999993,
++        "delta_dev_cer": 0.10999999999999988,
++        "delta_dev_em": -3.3400000000000034,
++        "delta_train_wer": 0.1100000000000001
++      }
++    },
++    {
++      "loop": 9,
++      "hypothesis": "Acoustic domain LoRA adaptation (r=16, alpha=32) on PhoWhisper Large targeting attention projections",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.07%, delta EM=-0.33%) or Train regressed",
++      "train": {
++        "wer": 0.59,
++        "cer": 0.47,
++        "sentence_em": 92.67,
++        "latency": 0.361
++      },
++      "dev": {
++        "wer": 1.68,
++        "cer": 1.16,
++        "sentence_em": 86.96,
++        "latency": 0.344
++      },
++      "deltas": {
++        "delta_dev_wer": 0.06999999999999984,
++        "delta_dev_cer": 0.08999999999999986,
++        "delta_dev_em": -0.3300000000000125,
++        "delta_train_wer": -0.57
++      }
++    },
++    {
++      "loop": 10,
++      "hypothesis": "Bilateral acoustic temporal padding (100ms pre-roll + 200ms post-roll buffer) on PhoWhisper Large to eliminate speech boundary truncation and final syllable dropouts",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.04%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 1.17,
++        "cer": 0.96,
++        "sentence_em": 90.67,
++        "latency": 0.3752
++      },
++      "dev": {
++        "wer": 1.65,
++        "cer": 1.11,
++        "sentence_em": 87.29,
++        "latency": 0.3663
++      },
++      "deltas": {
++        "delta_dev_wer": 0.039999999999999813,
++        "delta_dev_cer": 0.040000000000000036,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.010000000000000009
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/itn.py b/src/asr/itn.py
+index 04839de..1fae3c1 100644
+--- a/src/asr/itn.py
++++ b/src/asr/itn.py
+@@ -217,6 +217,13 @@ for _mod, _trad in _TONE_HARMONIZATION_MAP.items():
+ 
+ 
+ 
++# Dialectal phonological compound normalization
++# In Southern Vietnamese spoken speech, initial rhotic /r/ is frequently realized as [g]
++# in high-frequency financial collocations ('rút tiền', 'rút tiết kiệm').
++# In standard written Vietnamese, 'gút' is strictly an orthographic error in these contexts.
++_RE_DIALECT_RUT = re.compile(r"\bgút\s+(tiết\s+kiệm|tiền)\b", re.IGNORECASE)
++
++
+ def inverse_text_normalize(text: str) -> str:
+     """Apply Vietnamese Inverse Text Normalization (ITN) and orthographic standardization.
+ 
+@@ -226,6 +233,7 @@ def inverse_text_normalize(text: str) -> str:
+     3. Lighting/intensity percentage: 'ba mươi phần trăm' -> '30 phần trăm'
+     4. Multi-digit financial quantities: 'một trăm hai mươi ba triệu' -> '123 triệu'
+     5. Traditional orthographic tone harmonization: 'hủy' -> 'huỷ'
++    6. Dialectal phonological compound recovery: 'gút tiết kiệm' -> 'rút tiết kiệm'
+     """
+     if not text:
+         return ""
+@@ -278,5 +286,7 @@ def inverse_text_normalize(text: str) -> str:
+     for pat, rep in _TONE_PATTERNS:
+         s = pat.sub(rep, s)
+ 
++    # 6. Dialectal phonological compound recovery
++    s = _RE_DIALECT_RUT.sub(r"rút \1", s)
+ 
+     return s
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 247cd52..fd90643 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -12,9 +12,9 @@ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
+ DEFAULT_WHISPER_PROMPT = (
+-    "Hệ thống trợ lý giọng nói tiếng Việt LifeMate điều khiển thiết bị thông minh, tài chính ngân hàng, "
++    "Trợ lý giọng nói tiếng Việt LifeMate điều khiển thiết bị thông minh, tài chính ngân hàng, "
+     "nhắc nhở lịch trình, tra cứu thời tiết, đặt xe và liên lạc qua Zalo, SMS, gọi điện. "
+-    "Các nhân vật: Minh, Lan, Tuấn, Hương, Sếp Dũng, Bác Ba, Mai, Bố, Mẹ, An, Thảo, Huy, Nam, Bình, Phượng, Phạm Hùng."
++    "Các nhân vật: Minh, Lan, Tuấn, Hương, Sếp Dũng, Bác Ba, Mai, Bố, Mẹ, An, Thảo, Nam, Bình, Phượng, Phạm Hùng."
+ )
+ 
+ 
+@@ -51,6 +51,7 @@ class WhisperASREngine:
+         initial_prompt: str | None = DEFAULT_WHISPER_PROMPT,
+         attn_implementation: str | None = "sdpa",
+         pre_roll_pad_ms: float = 40.0,
++        post_roll_pad_ms: float = 40.0,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -69,6 +70,7 @@ class WhisperASREngine:
+         self.initial_prompt = initial_prompt
+         self.attn_implementation = attn_implementation
+         self.pre_roll_pad_ms = float(pre_roll_pad_ms)
++        self.post_roll_pad_ms = float(post_roll_pad_ms)
+ 
+         # Attempt standard AutoProcessor with graceful fallback for models with tokenizer quirks
+         try:
+@@ -119,10 +121,11 @@ class WhisperASREngine:
+         self.model.eval()
+ 
+     def _pad_waveform(self, waveform: np.ndarray, sr: int = 16000) -> np.ndarray:
+-        if self.pre_roll_pad_ms > 0 and len(waveform) > 0:
+-            pad_samples = int(round((self.pre_roll_pad_ms / 1000.0) * sr))
+-            if pad_samples > 0:
+-                return np.pad(waveform, (pad_samples, 0), mode="constant", constant_values=0.0)
++        if len(waveform) > 0 and (self.pre_roll_pad_ms > 0 or self.post_roll_pad_ms > 0):
++            pad_pre = int(round((self.pre_roll_pad_ms / 1000.0) * sr)) if self.pre_roll_pad_ms > 0 else 0
++            pad_post = int(round((self.post_roll_pad_ms / 1000.0) * sr)) if self.post_roll_pad_ms > 0 else 0
++            if pad_pre > 0 or pad_post > 0:
++                return np.pad(waveform, (pad_pre, pad_post), mode="constant", constant_values=0.0)
+         return waveform
+ 
+     def _build_gen_kwargs(self, extra_context: str | None = None) -> dict:

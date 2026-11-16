@@ -1,0 +1,192 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index c764c23..5176c87 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 11,
+-  "best_dev_wer": 1.6,
+-  "best_dev_cer": 1.08,
+-  "best_dev_em": 86.96,
+-  "best_train_wer": 1.14,
+-  "best_train_em": 91.33,
+-  "total_loops": 12,
+-  "accepted_loops": 5,
+-  "rejected_loops": 7,
++  "current_best_loop": 12,
++  "best_dev_wer": 1.57,
++  "best_dev_cer": 1.09,
++  "best_dev_em": 87.29,
++  "best_train_wer": 0.99,
++  "best_train_em": 92.0,
++  "total_loops": 14,
++  "accepted_loops": 6,
++  "rejected_loops": 8,
+   "history": [
+     {
+       "loop": 0,
+@@ -297,6 +297,54 @@
+         "delta_dev_em": -0.3300000000000125,
+         "delta_train_wer": -0.020000000000000018
+       }
++    },
++    {
++      "loop": 12,
++      "hypothesis": "Linear peak amplitude normalization to 0.95 combined with conversational vocative prompt de-biasing",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.03%) or EM improved (+0.33%) without train collapse",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.88,
++        "sentence_em": 92.0,
++        "latency": 0.4772
++      },
++      "dev": {
++        "wer": 1.57,
++        "cer": 1.09,
++        "sentence_em": 87.29,
++        "latency": 0.4533
++      },
++      "deltas": {
++        "delta_dev_wer": -0.030000000000000027,
++        "delta_dev_cer": 0.010000000000000009,
++        "delta_dev_em": 0.3300000000000125,
++        "delta_train_wer": -0.1499999999999999
++      }
++    },
++    {
++      "loop": 13,
++      "hypothesis": "Grounded conversational command prompting with conditional syntax anchors and comprehensive multi-domain entity coverage eliminates prefix verb distortion and sentence-final polite particle divergence.",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.12%, delta EM=-0.67%) or Train regressed",
++      "train": {
++        "wer": 1.22,
++        "cer": 1.05,
++        "sentence_em": 87.33,
++        "latency": 0.4874
++      },
++      "dev": {
++        "wer": 1.69,
++        "cer": 1.21,
++        "sentence_em": 86.62,
++        "latency": 0.4885
++      },
++      "deltas": {
++        "delta_dev_wer": 0.11999999999999988,
++        "delta_dev_cer": 0.11999999999999988,
++        "delta_dev_em": -0.6700000000000017,
++        "delta_train_wer": 0.22999999999999998
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 45d94ad..6e1f6c8 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -53,6 +53,10 @@ class WhisperASREngine:
+         pre_roll_pad_ms: float = 40.0,
+         post_roll_pad_ms: float = 40.0,
+         peak_normalize: bool = True,
++        trim_silence: bool = True,
++        vad_db_threshold: float = -35.0,
++        vad_margin_ms: float = 120.0,
++        repetition_penalty: float = 1.05,
+     ):
+         import torch
+         from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
+@@ -73,6 +77,10 @@ class WhisperASREngine:
+         self.pre_roll_pad_ms = float(pre_roll_pad_ms)
+         self.post_roll_pad_ms = float(post_roll_pad_ms)
+         self.peak_normalize = bool(peak_normalize)
++        self.trim_silence = bool(trim_silence)
++        self.vad_db_threshold = float(vad_db_threshold)
++        self.vad_margin_ms = float(vad_margin_ms)
++        self.repetition_penalty = float(repetition_penalty) if repetition_penalty is not None else 1.0
+ 
+         # Attempt standard AutoProcessor with graceful fallback for models with tokenizer quirks
+         try:
+@@ -122,17 +130,69 @@ class WhisperASREngine:
+ 
+         self.model.eval()
+ 
++    def _trim_waveform_silence(
++        self,
++        waveform: np.ndarray,
++        sr: int = 16000,
++        frame_ms: float = 25.0,
++        hop_ms: float = 10.0,
++        db_threshold: float = -35.0,
++        margin_ms: float = 120.0,
++    ) -> np.ndarray:
++        """Conservative energy-based boundary silence trimming with safety collar.
++
++        Detects leading and trailing silence regions below db_threshold relative to peak frame RMS,
++        retaining a margin_ms buffer so low-energy consonants and offsets are never truncated.
++        """
++        if len(waveform) == 0:
++            return waveform
++
++        frame_len = int(round((frame_ms / 1000.0) * sr))
++        hop_len = int(round((hop_ms / 1000.0) * sr))
++        margin_len = int(round((margin_ms / 1000.0) * sr))
++
++        num_frames = 1 + (len(waveform) - frame_len) // hop_len
++        if num_frames <= 0:
++            return waveform
++
++        shape = (num_frames, frame_len)
++        strides = (waveform.strides[0] * hop_len, waveform.strides[0])
++        frames = np.lib.stride_tricks.as_strided(waveform, shape=shape, strides=strides)
++        rms = np.sqrt(np.mean(frames ** 2, axis=1) + 1e-12)
++
++        peak_rms = float(np.max(rms))
++        if peak_rms < 1e-5:
++            return waveform
++
++        rms_db = 20.0 * np.log10(rms / peak_rms)
++        active = np.where(rms_db > db_threshold)[0]
++        if len(active) == 0:
++            return waveform
++
++        start_idx = max(0, active[0] * hop_len - margin_len)
++        end_idx = min(len(waveform), (active[-1] * hop_len + frame_len) + margin_len)
++        return waveform[start_idx:end_idx]
++
+     def _preprocess_waveform(self, waveform: np.ndarray, sr: int = 16000) -> np.ndarray:
+         if len(waveform) == 0:
+             return waveform
+ 
+-        # Peak amplitude normalization to 0.95 to optimize Mel filterbank dynamic headroom
++        # 1. Conservative energy-based silence trimming before peak normalization
++        if getattr(self, "trim_silence", True):
++            waveform = self._trim_waveform_silence(
++                waveform,
++                sr=sr,
++                db_threshold=getattr(self, "vad_db_threshold", -35.0),
++                margin_ms=getattr(self, "vad_margin_ms", 120.0),
++            )
++
++        # 2. Peak amplitude normalization to 0.95 to optimize Mel filterbank dynamic headroom
+         if getattr(self, "peak_normalize", True):
+             peak = float(np.max(np.abs(waveform)))
+             if peak > 1e-4:
+                 waveform = waveform * (0.95 / peak)
+ 
+-        # Symmetric bilateral collar padding
++        # 3. Symmetric bilateral collar padding
+         if self.pre_roll_pad_ms > 0 or self.post_roll_pad_ms > 0:
+             pad_pre = int(round((self.pre_roll_pad_ms / 1000.0) * sr)) if self.pre_roll_pad_ms > 0 else 0
+             pad_post = int(round((self.post_roll_pad_ms / 1000.0) * sr)) if self.post_roll_pad_ms > 0 else 0
+@@ -154,6 +214,9 @@ class WhisperASREngine:
+             "max_new_tokens": 128,
+         }
+ 
++        if getattr(self, "repetition_penalty", 1.0) and self.repetition_penalty != 1.0:
++            gen_kwargs["repetition_penalty"] = float(self.repetition_penalty)
++
+         prompt_text = self.initial_prompt
+         if extra_context:
+             prompt_text = f"{prompt_text} {extra_context}".strip() if prompt_text else extra_context

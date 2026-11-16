@@ -1,0 +1,24 @@
+# Configuration for PhoWhisper-Large Audio-Tower LoRA fine-tuning
+model_id: "kzap201/phowhisper-large-zaloai"
+train_jsonl: "data/train/train.jsonl"
+splits_json: "configs/splits/dev_v1.json"
+folds_json: "configs/splits/train_only_5folds.json"
+data_root: "data/train"
+output_dir: "experiments/exp_20261108_phowhisper_lora"
+
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.15
+  target_mode: "encoder_cross_attn"
+
+training:
+  epochs: 3
+  learning_rate: 0.00003
+  batch_size: 8
+  gradient_accumulation_steps: 2
+  weight_decay: 0.01
+  warmup_steps: 30
+  fp16: true
+  include_history_audio: true
+  seed: 42

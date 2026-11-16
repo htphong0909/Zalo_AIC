@@ -1,0 +1,24 @@
+{
+  "loop": 19,
+  "hypothesis": "Deterministic decoding stabilization (condition_on_prev_tokens=False, temperature=0.0, compression_ratio_threshold=2.4) combined with polite enclitic comma suppression, quote removal, and Celsius unit standardization",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.86,
+    "sentence_em": 92.0,
+    "latency": 0.3695
+  },
+  "dev": {
+    "wer": 1.55,
+    "cer": 1.09,
+    "sentence_em": 86.96,
+    "latency": 0.3506
+  },
+  "deltas": {
+    "delta_dev_wer": 0.0,
+    "delta_dev_cer": 0.0,
+    "delta_dev_em": 0.0,
+    "delta_train_wer": 0.0
+  }
+}

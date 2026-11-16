@@ -1,0 +1,24 @@
+{
+  "loop": 22,
+  "hypothesis": "Southern conversational negative particle normalization standardizing pre-predicate debuccalized [hɔŋ] to formal written không",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.01%, delta EM=-0.34%) or Train regressed",
+  "train": {
+    "wer": 0.96,
+    "cer": 0.86,
+    "sentence_em": 92.0,
+    "latency": 0.364
+  },
+  "dev": {
+    "wer": 1.56,
+    "cer": 1.09,
+    "sentence_em": 86.62,
+    "latency": 0.3574
+  },
+  "deltas": {
+    "delta_dev_wer": 0.010000000000000009,
+    "delta_dev_cer": 0.0,
+    "delta_dev_em": -0.3399999999999892,
+    "delta_train_wer": -0.030000000000000027
+  }
+}

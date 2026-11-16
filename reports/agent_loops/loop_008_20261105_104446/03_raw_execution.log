@@ -1,0 +1,9 @@
+=== [1/3] Initializing PhoWhisper Large (Loop 08) on GPU ===
+Engine initialized in 24.73s!
+=== [2/3] Evaluating Referee 1: Train Glass-Box (150 samples) ===
+Train (150 samples) finished in 76.48s!
+Train WER: 1.27% | CER: 1.06% | Sentence EM: 89.33% | Latency: 0.5082s
+=== [3/3] Evaluating Referee 2: Sealed Blind Dev (299 samples) ===
+Dev (299 samples) finished in 145.32s!
+Dev WER: 1.78% | CER: 1.18% | Sentence EM: 83.95% | Latency: 0.4839s
+ALL EVALUATION RESULTS WRITTEN SUCCESSFULLY!

@@ -1,0 +1,24 @@
+{
+  "loop": 27,
+  "hypothesis": "Widening VAD silence margin from 150ms to 200ms and relaxing energy threshold from -35dB to -40dB preserves low-energy acoustic onsets without boundary clipping",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.05%, delta EM=+0.67%) or Train regressed",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.88,
+    "sentence_em": 92.0,
+    "latency": 0.3679
+  },
+  "dev": {
+    "wer": 1.57,
+    "cer": 1.1,
+    "sentence_em": 87.96,
+    "latency": 0.3469
+  },
+  "deltas": {
+    "delta_dev_wer": 0.050000000000000044,
+    "delta_dev_cer": 0.020000000000000018,
+    "delta_dev_em": 0.6699999999999875,
+    "delta_train_wer": 0.0
+  }
+}

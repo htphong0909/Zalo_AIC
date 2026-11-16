@@ -1,0 +1,10 @@
+{
+  "loop": 3,
+  "timestamp": "2026-11-05T04:41:03.719594",
+  "optimization_summary": "PhoWhisper Large (1.54B) engine integration with robust fallback, domain prompt biasing, and ITN",
+  "diff_stat": "configs/agent_loop_state.json         |  66 +++++++--\n configs/e2e_phowhisper_qwen35_4b.yaml |  33 +++++\n src/asr/base.py                       |  15 +-\n src/asr/itn.py                        | 267 ++++++++++++++++++++++++++++++++++\n src/asr/qwen_asr.py                   |   6 +\n src/asr/whisper_engine.py             |  69 +++++++--\n 6 files changed, 433 insertions(+), 23 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "74/74 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

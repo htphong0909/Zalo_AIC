@@ -1,0 +1,24 @@
+{
+  "loop": 40,
+  "hypothesis": "Multi-Dialect Cross-Attention & Encoder LoRA adaptation (r=8, alpha=16) aligns acoustic latent representations to standard Vietnamese text",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
+  "train": {
+    "wer": 0.77,
+    "cer": 0.59,
+    "sentence_em": 92.67,
+    "latency": 0.3656
+  },
+  "dev": {
+    "wer": 1.5,
+    "cer": 1.03,
+    "sentence_em": 86.96,
+    "latency": 0.355
+  },
+  "deltas": {
+    "delta_dev_wer": 0.0,
+    "delta_dev_cer": 0.0,
+    "delta_dev_em": 0.0,
+    "delta_train_wer": -0.04999999999999993
+  }
+}

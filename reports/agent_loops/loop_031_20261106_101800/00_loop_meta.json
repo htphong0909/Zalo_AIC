@@ -1,0 +1,8 @@
+{
+  "loop": 31,
+  "hypothesis": "Domain loanword compound fusion (e-mail -> email, wi-fi -> wifi) and ride-hailing entity standardization ('xe 4 chỗ' -> 'xe bốn chỗ') eliminates token splitting",
+  "start_time": "2026-11-06T10:18:00.172388",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "loop-researcher"
+}

@@ -1,0 +1,10 @@
+{
+  "loop": 32,
+  "timestamp": "2026-11-06T10:55:08.075866",
+  "optimization_summary": "vad_margin_ms 150.0 -> 170.0 ms (+1 encoder frame safety collar at clean -35dB threshold)",
+  "diff_stat": "src/asr/whisper_engine.py | 6 +++---\n 1 file changed, 3 insertions(+), 3 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "68/68 passed",
+  "audit_passed": true,
+  "audit_notes": "Clean acoustic VAD collar calibration, zero dev leak, size budget ok"
+}

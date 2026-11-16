@@ -1,0 +1,24 @@
+{
+  "loop": 15,
+  "hypothesis": "Dynamic boundary silence trimming (-28.0 dB with 150ms safety collar) combined with calibrated autoregressive repetition penalty (1.10) suppresses background microphone hum hallucinations and breaks entity KV-cache attention latching.",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.00%, delta EM=-0.67%) or Train regressed",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.87,
+    "sentence_em": 92.0,
+    "latency": 0.3503
+  },
+  "dev": {
+    "wer": 1.56,
+    "cer": 1.04,
+    "sentence_em": 86.29,
+    "latency": 0.3356
+  },
+  "deltas": {
+    "delta_dev_wer": 0.0,
+    "delta_dev_cer": -0.010000000000000009,
+    "delta_dev_em": -0.6699999999999875,
+    "delta_train_wer": -0.030000000000000027
+  }
+}

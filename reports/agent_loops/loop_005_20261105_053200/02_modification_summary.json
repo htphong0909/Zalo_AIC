@@ -1,0 +1,10 @@
+{
+  "loop": 5,
+  "timestamp": "2026-11-05T05:38:24.383499",
+  "optimization_summary": "Constrained beam search decoding (num_beams=2) with repetition penalty (1.1) and enhanced domain prompt biasing",
+  "diff_stat": "configs/agent_loop_state.json         |  66 +++++++++++++++---\n configs/e2e_phowhisper_qwen35_4b.yaml |   2 +\n src/asr/whisper_engine.py             | 125 +++++++++++++++++++++++++++++-----\n 3 files changed, 166 insertions(+), 27 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "75/75 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

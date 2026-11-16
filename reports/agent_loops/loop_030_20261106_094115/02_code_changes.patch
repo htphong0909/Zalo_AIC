@@ -1,0 +1,259 @@
+diff --git a/src/asr/itn.py b/src/asr/itn.py
+index 1fae3c1..3e9ee28 100644
+--- a/src/asr/itn.py
++++ b/src/asr/itn.py
+@@ -207,6 +207,8 @@ _TONE_HARMONIZATION_MAP: dict[str, str] = {
+     "hóa": "hoá",
+     "xóa": "xoá",
+     "hủy": "huỷ",
++    "tòa": "toà",
++    "khóa": "khoá",
+ }
+ 
+ _TONE_PATTERNS: list[tuple[re.Pattern, str]] = []
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 110dd3f..9c90921 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -40,12 +40,95 @@ def _sanitize_hyp(raw_text: str, enable_itn: bool = True) -> str:
+     return clean_text
+ 
+ 
++def trim_waveform_silence(
++    waveform: np.ndarray,
++    sr: int = 16000,
++    frame_ms: float = 25.0,
++    hop_ms: float = 10.0,
++    db_threshold: float = -35.0,
++    margin_ms: float = 150.0,
++) -> np.ndarray:
++    """Conservative energy-based boundary silence trimming with safety collar.
++
++    Detects leading and trailing silence regions below db_threshold relative to peak frame RMS,
++    retaining a margin_ms buffer so low-energy consonants and offsets are never truncated.
++    """
++    if len(waveform) == 0:
++        return waveform
++
++    frame_len = int(round((frame_ms / 1000.0) * sr))
++    hop_len = int(round((hop_ms / 1000.0) * sr))
++    margin_len = int(round((margin_ms / 1000.0) * sr))
++
++    num_frames = 1 + (len(waveform) - frame_len) // hop_len
++    if num_frames <= 0:
++        return waveform
++
++    shape = (num_frames, frame_len)
++    strides = (waveform.strides[0] * hop_len, waveform.strides[0])
++    frames = np.lib.stride_tricks.as_strided(waveform, shape=shape, strides=strides)
++    rms = np.sqrt(np.mean(frames ** 2, axis=1) + 1e-12)
++
++    peak_rms = float(np.max(rms))
++    if peak_rms < 1e-5:
++        return waveform
++
++    rms_db = 20.0 * np.log10(rms / peak_rms)
++    active = np.where(rms_db > db_threshold)[0]
++    if len(active) == 0:
++        return waveform
++
++    start_idx = max(0, active[0] * hop_len - margin_len)
++    end_idx = min(len(waveform), (active[-1] * hop_len + frame_len) + margin_len)
++    return waveform[start_idx:end_idx]
++
++
++def preprocess_waveform(
++    waveform: np.ndarray,
++    sr: int = 16000,
++    *,
++    pre_roll_pad_ms: float = 60.0,
++    post_roll_pad_ms: float = 60.0,
++    peak_normalize: bool = True,
++    trim_silence: bool = True,
++    vad_db_threshold: float = -35.0,
++    vad_margin_ms: float = 150.0,
++) -> np.ndarray:
++    """Preprocesses audio waveform with conservative VAD silence trimming, peak normalization, and acoustic collar padding."""
++    if len(waveform) == 0:
++        return waveform
++
++    # 1. Conservative energy-based silence trimming before peak normalization
++    if trim_silence:
++        waveform = trim_waveform_silence(
++            waveform,
++            sr=sr,
++            db_threshold=vad_db_threshold,
++            margin_ms=vad_margin_ms,
++        )
++
++    # 2. Peak amplitude normalization to 0.95 to optimize Mel filterbank dynamic headroom
++    if peak_normalize:
++        peak = float(np.max(np.abs(waveform)))
++        if peak > 1e-4:
++            waveform = waveform * (0.95 / peak)
++
++    # 3. Symmetric bilateral collar padding
++    if pre_roll_pad_ms > 0 or post_roll_pad_ms > 0:
++        pad_pre = int(round((pre_roll_pad_ms / 1000.0) * sr)) if pre_roll_pad_ms > 0 else 0
++        pad_post = int(round((post_roll_pad_ms / 1000.0) * sr)) if post_roll_pad_ms > 0 else 0
++        if pad_pre > 0 or pad_post > 0:
++            waveform = np.pad(waveform, (pad_pre, pad_post), mode="constant", constant_values=0.0)
++    return waveform
++
++
+ class WhisperASREngine:
+     """Deterministic Whisper ASR engine (greedy decoding, Vietnamese forced language, pre-roll padded)."""
+ 
+     def __init__(
+         self,
+         model_id: str = "kzap201/phowhisper-large-zaloai",
++        adapter_path: str | Path | None = None,
+         *,
+         device: str = "cuda",
+         dtype: str = "float16",
+@@ -71,6 +154,7 @@ class WhisperASREngine:
+             torch_dtype = torch.float32
+ 
+         self.model_id = model_id
++        self.adapter_path = str(adapter_path) if adapter_path is not None else None
+         self.device = device
+         self.torch_dtype = torch_dtype
+         self.language = language
+@@ -132,6 +216,11 @@ class WhisperASREngine:
+                     **model_kwargs,
+                 ).to(device)
+ 
++        if self.adapter_path:
++            from peft import PeftModel
++
++            self.model = PeftModel.from_pretrained(self.model, str(self.adapter_path)).to(device)
++
+         self.model.eval()
+ 
+     def _trim_waveform_silence(
+@@ -143,66 +232,26 @@ class WhisperASREngine:
+         db_threshold: float = -35.0,
+         margin_ms: float = 150.0,
+     ) -> np.ndarray:
+-        """Conservative energy-based boundary silence trimming with safety collar.
+-
+-        Detects leading and trailing silence regions below db_threshold relative to peak frame RMS,
+-        retaining a margin_ms buffer so low-energy consonants and offsets are never truncated.
+-        """
+-        if len(waveform) == 0:
+-            return waveform
+-
+-        frame_len = int(round((frame_ms / 1000.0) * sr))
+-        hop_len = int(round((hop_ms / 1000.0) * sr))
+-        margin_len = int(round((margin_ms / 1000.0) * sr))
+-
+-        num_frames = 1 + (len(waveform) - frame_len) // hop_len
+-        if num_frames <= 0:
+-            return waveform
+-
+-        shape = (num_frames, frame_len)
+-        strides = (waveform.strides[0] * hop_len, waveform.strides[0])
+-        frames = np.lib.stride_tricks.as_strided(waveform, shape=shape, strides=strides)
+-        rms = np.sqrt(np.mean(frames ** 2, axis=1) + 1e-12)
+-
+-        peak_rms = float(np.max(rms))
+-        if peak_rms < 1e-5:
+-            return waveform
+-
+-        rms_db = 20.0 * np.log10(rms / peak_rms)
+-        active = np.where(rms_db > db_threshold)[0]
+-        if len(active) == 0:
+-            return waveform
+-
+-        start_idx = max(0, active[0] * hop_len - margin_len)
+-        end_idx = min(len(waveform), (active[-1] * hop_len + frame_len) + margin_len)
+-        return waveform[start_idx:end_idx]
++        return trim_waveform_silence(
++            waveform,
++            sr=sr,
++            frame_ms=frame_ms,
++            hop_ms=hop_ms,
++            db_threshold=db_threshold,
++            margin_ms=margin_ms,
++        )
+ 
+     def _preprocess_waveform(self, waveform: np.ndarray, sr: int = 16000) -> np.ndarray:
+-        if len(waveform) == 0:
+-            return waveform
+-
+-        # 1. Conservative energy-based silence trimming before peak normalization
+-        if getattr(self, "trim_silence", True):
+-            waveform = self._trim_waveform_silence(
+-                waveform,
+-                sr=sr,
+-                db_threshold=getattr(self, "vad_db_threshold", -35.0),
+-                margin_ms=getattr(self, "vad_margin_ms", 150.0),
+-            )
+-
+-        # 2. Peak amplitude normalization to 0.95 to optimize Mel filterbank dynamic headroom
+-        if getattr(self, "peak_normalize", True):
+-            peak = float(np.max(np.abs(waveform)))
+-            if peak > 1e-4:
+-                waveform = waveform * (0.95 / peak)
+-
+-        # 3. Symmetric bilateral collar padding
+-        if self.pre_roll_pad_ms > 0 or self.post_roll_pad_ms > 0:
+-            pad_pre = int(round((self.pre_roll_pad_ms / 1000.0) * sr)) if self.pre_roll_pad_ms > 0 else 0
+-            pad_post = int(round((self.post_roll_pad_ms / 1000.0) * sr)) if self.post_roll_pad_ms > 0 else 0
+-            if pad_pre > 0 or pad_post > 0:
+-                waveform = np.pad(waveform, (pad_pre, pad_post), mode="constant", constant_values=0.0)
+-        return waveform
++        return preprocess_waveform(
++            waveform,
++            sr=sr,
++            pre_roll_pad_ms=getattr(self, "pre_roll_pad_ms", 60.0),
++            post_roll_pad_ms=getattr(self, "post_roll_pad_ms", 60.0),
++            peak_normalize=getattr(self, "peak_normalize", True),
++            trim_silence=getattr(self, "trim_silence", True),
++            vad_db_threshold=getattr(self, "vad_db_threshold", -35.0),
++            vad_margin_ms=getattr(self, "vad_margin_ms", 150.0),
++        )
+ 
+     def _pad_waveform(self, waveform: np.ndarray, sr: int = 16000) -> np.ndarray:
+         """Alias for backward compatibility with external callers and unit tests."""
+diff --git a/src/eval/blind_dev_evaluator.py b/src/eval/blind_dev_evaluator.py
+index 71a840f..752b2a0 100644
+--- a/src/eval/blind_dev_evaluator.py
++++ b/src/eval/blind_dev_evaluator.py
+@@ -115,13 +115,14 @@ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description="Run Sealed Blind Box Dev ASR Evaluation")
+     parser.add_argument("--model-id", type=str, default="kzap201/phowhisper-large-zaloai")
+     parser.add_argument("--engine", type=str, default="whisper", choices=["whisper", "chunkformer"])
++    parser.add_argument("--adapter-path", type=str, default=None, help="Optional path to LoRA adapter")
+     parser.add_argument("--batch-size", type=int, default=8)
+     parser.add_argument("--output", type=str, default="scripts/scratch/temp_golden_res.json")
+     args = parser.parse_args()
+ 
+     if args.engine == "whisper":
+         from src.asr.whisper_engine import WhisperASREngine
+-        engine = WhisperASREngine(model_id=args.model_id)
++        engine = WhisperASREngine(model_id=args.model_id, adapter_path=args.adapter_path)
+     else:
+         from src.asr.chunkformer_engine import ChunkFormerASREngine
+         engine = ChunkFormerASREngine()
+diff --git a/src/eval/train_asr_evaluator.py b/src/eval/train_asr_evaluator.py
+index 279b74c..f286943 100644
+--- a/src/eval/train_asr_evaluator.py
++++ b/src/eval/train_asr_evaluator.py
+@@ -119,6 +119,7 @@ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description="Run Glass-Box Train ASR Evaluation")
+     parser.add_argument("--model-id", type=str, default="kzap201/phowhisper-large-zaloai")
+     parser.add_argument("--engine", type=str, default="whisper", choices=["whisper", "chunkformer"])
++    parser.add_argument("--adapter-path", type=str, default=None, help="Optional path to LoRA adapter")
+     parser.add_argument("--max-samples", type=int, default=150)
+     parser.add_argument("--batch-size", type=int, default=8)
+     parser.add_argument("--output", type=str, default="scripts/scratch/temp_train_res.json")
+@@ -126,7 +127,7 @@ if __name__ == "__main__":
+ 
+     if args.engine == "whisper":
+         from src.asr.whisper_engine import WhisperASREngine
+-        engine = WhisperASREngine(model_id=args.model_id)
++        engine = WhisperASREngine(model_id=args.model_id, adapter_path=args.adapter_path)
+     else:
+         from src.asr.chunkformer_engine import ChunkFormerASREngine
+         engine = ChunkFormerASREngine()

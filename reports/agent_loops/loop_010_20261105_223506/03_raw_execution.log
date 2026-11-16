@@ -1,0 +1,15 @@
+============================================================
+STARTING DUAL-REFEREE EVALUATION (LOOP 10)
+============================================================
+
+>>> [REFEREE 1] Executing train_asr_evaluator.py...
+[REFEREE 1: TRAIN GLASS-BOX] Samples=150 | WER=1.17% | CER=0.96% | EM=90.67% | Latency=0.3752s
+>>> [REFEREE 1] Completed in 95.50s
+
+>>> [REFEREE 2] Executing blind_dev_evaluator.py...
+[REFEREE 2: SEALED BLIND DEV] Samples=299 | Dev WER=1.65% | Dev CER=1.11% | Dev EM=87.29% | Latency=0.3663s
+>>> [REFEREE 2] Completed in 122.60s
+
+============================================================
+DUAL-REFEREE EVALUATION COMPLETED SUCCESSFULLY!
+============================================================

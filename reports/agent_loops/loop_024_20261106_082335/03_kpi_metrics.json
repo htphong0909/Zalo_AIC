@@ -1,0 +1,24 @@
+{
+  "loop": 24,
+  "hypothesis": "Gentle first-order FIR pre-emphasis filtering (alpha=0.90) to boost high-frequency acoustic cues for unvoiced stops and fricatives",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.01%, delta EM=-0.34%) or Train regressed",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.88,
+    "sentence_em": 92.0,
+    "latency": 0.3642
+  },
+  "dev": {
+    "wer": 1.56,
+    "cer": 1.05,
+    "sentence_em": 86.62,
+    "latency": 0.3509
+  },
+  "deltas": {
+    "delta_dev_wer": 0.010000000000000009,
+    "delta_dev_cer": -0.040000000000000036,
+    "delta_dev_em": -0.3399999999999892,
+    "delta_train_wer": 0.0
+  }
+}

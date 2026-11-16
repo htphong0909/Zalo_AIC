@@ -1,0 +1,22 @@
+=== LOOP 12 DUAL REFEREE LOG ===
+Started at: Fri Nov  6 00:52:31 2026
+
+=== STDOUT ===
+============================================================
+STARTING DUAL-REFEREE EVALUATION (LOOP 12)
+============================================================
+
+>>> [REFEREE 1] Executing train_asr_evaluator.py...
+>>> [REFEREE 1] Completed in 191.04s
+
+>>> [REFEREE 2] Executing blind_dev_evaluator.py...
+>>> [REFEREE 2] Completed in 177.77s
+
+============================================================
+DUAL-REFEREE EVALUATION COMPLETED SUCCESSFULLY!
+============================================================
+
+
+=== STDERR ===
+
+Return code: 0

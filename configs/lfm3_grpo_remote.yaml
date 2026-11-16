@@ -1,0 +1,39 @@
+model_id: /content/models/lfm3_sft_merged
+train_file: /content/data/sft/lfm3_train_grpo.jsonl
+output_dir: /content/experiments/exp_lfm3_grpo
+split: train
+root: /content/data
+verify_env: true
+seed: 42
+
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.0
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - in_proj
+    - out_proj
+    - w1
+    - w2
+    - w3
+
+training:
+  max_steps: 150
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 16
+  num_generations: 8
+  generation_batch_size: 8
+  max_completion_length: 640
+  temperature: 1.0
+  learning_rate: 0.00001
+  beta: 0.04
+  lr_scheduler_type: constant_with_warmup
+  warmup_steps: 5
+  logging_steps: 5
+  save_strategy: steps
+  save_steps: 50

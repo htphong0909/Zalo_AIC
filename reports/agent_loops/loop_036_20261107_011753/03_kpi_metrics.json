@@ -1,0 +1,24 @@
+{
+  "loop": 36,
+  "hypothesis": "Audio-Tower-Only LoRA adaptation (CLAnSR ICASSP 2025) restricting PEFT to acoustic encoder projections with 100% frozen decoder",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.86,
+    "sentence_em": 92.0,
+    "latency": 0.3671
+  },
+  "dev": {
+    "wer": 1.51,
+    "cer": 1.07,
+    "sentence_em": 87.63,
+    "latency": 0.35
+  },
+  "deltas": {
+    "delta_dev_wer": 0.0,
+    "delta_dev_cer": 0.0,
+    "delta_dev_em": 0.0,
+    "delta_train_wer": 0.0
+  }
+}

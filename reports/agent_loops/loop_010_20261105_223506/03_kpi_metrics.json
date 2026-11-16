@@ -1,0 +1,24 @@
+{
+  "loop": 10,
+  "hypothesis": "Bilateral acoustic temporal padding (100ms pre-roll + 200ms post-roll buffer) on PhoWhisper Large to eliminate speech boundary truncation and final syllable dropouts",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.04%, delta EM=+0.00%) or Train regressed",
+  "train": {
+    "wer": 1.17,
+    "cer": 0.96,
+    "sentence_em": 90.67,
+    "latency": 0.3752
+  },
+  "dev": {
+    "wer": 1.65,
+    "cer": 1.11,
+    "sentence_em": 87.29,
+    "latency": 0.3663
+  },
+  "deltas": {
+    "delta_dev_wer": 0.039999999999999813,
+    "delta_dev_cer": 0.040000000000000036,
+    "delta_dev_em": 0.0,
+    "delta_train_wer": 0.010000000000000009
+  }
+}

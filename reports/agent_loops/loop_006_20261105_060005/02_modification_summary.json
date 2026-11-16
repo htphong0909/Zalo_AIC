@@ -1,0 +1,10 @@
+{
+  "loop": 6,
+  "timestamp": "2026-11-05T06:13:13.385610",
+  "optimization_summary": "Orthographic tone harmonization (hoà/hoá/thuỷ) with hallucination suppression (condition_on_prev_tokens=False) and acoustic onset padding",
+  "diff_stat": "configs/agent_loop_state.json | 90 ++++++++++++++++++++++++++++++++++++++-----\n src/asr/itn.py                | 39 +++++++++++++++++--\n src/asr/whisper_engine.py     |  9 +++++\n 3 files changed, 125 insertions(+), 13 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "74/74 passed",
+  "audit_passed": true,
+  "audit_notes": "PASS"
+}

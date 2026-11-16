@@ -1,0 +1,330 @@
+=== REFEREE RUN LOG FOR LOOP 34 ===
+Hypothesis: Generic Levenshtein phonetic-bounded alignment and flanked single-syllable recovery with strict entity immunity (PY-GEC ICASSP 2025)
+
+
+--- REFEREE 1 (TRAIN) ---
+Return code: 0
+[REFEREE 1: TRAIN GLASS-BOX] Samples=150 | WER=6.7% | CER=4.4% | EM=25.33% | Latency=0.3701s
+
+
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]
+Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 1793.05it/s]
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Loading weights:   0%|          | 0/1259 [00:00<?, ?it/s]
+Loading weights:  19%|█▉        | 240/1259 [00:00<00:00, 2395.23it/s]
+Loading weights:  38%|███▊      | 480/1259 [00:00<00:00, 2382.15it/s]
+Loading weights:  57%|█████▋    | 719/1259 [00:00<00:00, 2330.96it/s]
+Loading weights:  76%|███████▌  | 953/1259 [00:00<00:00, 2262.45it/s]
+Loading weights:  94%|█████████▎| 1180/1259 [00:00<00:00, 2205.06it/s]
+Loading weights: 100%|██████████| 1259/1259 [00:00<00:00, 2253.72it/s]
+[transformers] Passing `generation_config` together with generation-related arguments=({'suppress_tokens', 'begin_suppress_tokens'}) is deprecated and will be removed in future versions. Please pass either a `generation_config` object OR all generation parameters explicitly, but not both.
+[transformers] The attention mask is not set with a batched input, and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+0it [00:00, ?it/s]
+7it [00:00, 60.33it/s]
+8it [00:01,  6.19it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 67.14it/s]
+8it [00:01,  7.90it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+8it [00:00,  9.27it/s]
+8it [00:00,  9.27it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+8it [00:01,  7.63it/s]
+8it [00:01,  7.63it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+8it [00:00,  8.08it/s]
+8it [00:00,  8.08it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 63.73it/s]
+8it [00:01,  7.58it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 43.45it/s]
+8it [00:01,  5.28it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 67.06it/s]
+8it [00:01,  7.21it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 51.37it/s]
+8it [00:01,  5.03it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 54.04it/s]
+8it [00:01,  6.36it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 46.61it/s]
+8it [00:01,  4.83it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 65.31it/s]
+8it [00:01,  6.58it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 66.10it/s]
+8it [00:01,  7.44it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 65.27it/s]
+8it [00:01,  7.13it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 62.80it/s]
+8it [00:01,  6.01it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 61.06it/s]
+8it [00:01,  7.39it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 64.06it/s]
+8it [00:01,  7.43it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 45.53it/s]
+8it [00:01,  6.17it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00,  6.66it/s]
+6it [00:00,  6.66it/s]
+
+
+--- REFEREE 2 (DEV) ---
+Return code: 0
+[REFEREE 2: SEALED BLIND DEV] Samples=299 | Dev WER=8.39% | Dev CER=5.24% | Dev EM=22.07% | Latency=0.3527s
+
+
+Fetching 10 files:   0%|          | 0/10 [00:00<?, ?it/s]
+Fetching 10 files: 100%|██████████| 10/10 [00:00<00:00, 1608.31it/s]
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Loading weights:   0%|          | 0/1259 [00:00<?, ?it/s]
+Loading weights:  18%|█▊        | 231/1259 [00:00<00:00, 2258.91it/s]
+Loading weights:  37%|███▋      | 471/1259 [00:00<00:00, 2316.33it/s]
+Loading weights:  56%|█████▌    | 703/1259 [00:00<00:00, 2304.51it/s]
+Loading weights:  74%|███████▍  | 934/1259 [00:00<00:00, 2136.54it/s]
+Loading weights:  91%|█████████▏| 1151/1259 [00:00<00:00, 2141.40it/s]
+Loading weights: 100%|██████████| 1259/1259 [00:00<00:00, 2174.76it/s]
+[transformers] Passing `generation_config` together with generation-related arguments=({'suppress_tokens', 'begin_suppress_tokens'}) is deprecated and will be removed in future versions. Please pass either a `generation_config` object OR all generation parameters explicitly, but not both.
+[transformers] The attention mask is not set with a batched input, and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer WhisperTokenizer. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+
+0it [00:00, ?it/s]
+5it [00:00, 45.56it/s]
+8it [00:01,  5.32it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 65.47it/s]
+8it [00:01,  7.15it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 50.60it/s]
+8it [00:01,  5.89it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 65.68it/s]
+8it [00:01,  7.14it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 51.36it/s]
+8it [00:01,  6.33it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 64.86it/s]
+8it [00:01,  6.38it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 57.54it/s]
+8it [00:01,  6.32it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 40.59it/s]
+8it [00:01,  5.27it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 58.16it/s]
+8it [00:01,  6.66it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 59.44it/s]
+8it [00:01,  6.84it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 64.99it/s]
+8it [00:01,  7.98it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 61.42it/s]
+8it [00:01,  7.23it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+8it [00:00, 10.90it/s]
+8it [00:00, 10.90it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+8it [00:00,  8.57it/s]
+8it [00:00,  8.56it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 48.12it/s]
+8it [00:01,  7.45it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 65.16it/s]
+8it [00:01,  7.51it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 57.83it/s]
+8it [00:01,  7.77it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 63.03it/s]
+8it [00:01,  7.77it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 56.06it/s]
+8it [00:01,  7.41it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 69.34it/s]
+8it [00:00,  9.05it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 41.38it/s]
+8it [00:01,  6.06it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 54.59it/s]
+8it [00:01,  7.00it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 47.58it/s]
+8it [00:01,  6.04it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 58.92it/s]
+8it [00:01,  7.44it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 53.81it/s]
+8it [00:01,  6.64it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 48.14it/s]
+8it [00:01,  6.34it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+5it [00:00, 47.83it/s]
+8it [00:01,  5.55it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 67.92it/s]
+8it [00:00,  8.52it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 54.43it/s]
+8it [00:01,  7.17it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 58.55it/s]
+8it [00:01,  6.32it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 54.46it/s]
+8it [00:01,  7.10it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 53.27it/s]
+8it [00:01,  6.61it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 54.34it/s]
+8it [00:01,  7.08it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+6it [00:00, 55.45it/s]
+8it [00:01,  4.92it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 60.49it/s]
+8it [00:01,  7.47it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 60.15it/s]
+8it [00:01,  7.44it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+7it [00:00, 63.50it/s]
+8it [00:01,  7.28it/s]
+[transformers] Both `max_new_tokens` (=128) and `max_length`(=448) seem to have been set. `max_new_tokens` will take precedence. Please refer to the documentation for more information. (https://huggingface.co/docs/transformers/main/en/main_classes/text_generation)
+
+0it [00:00, ?it/s]
+3it [00:00,  5.70it/s]
+3it [00:00,  5.70it/s]
+

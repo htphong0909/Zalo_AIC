@@ -1,0 +1,77 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index c764c23..9e78e8c 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,13 +1,13 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 11,
+-  "best_dev_wer": 1.6,
+-  "best_dev_cer": 1.08,
+-  "best_dev_em": 86.96,
+-  "best_train_wer": 1.14,
+-  "best_train_em": 91.33,
+-  "total_loops": 12,
+-  "accepted_loops": 5,
++  "current_best_loop": 12,
++  "best_dev_wer": 1.57,
++  "best_dev_cer": 1.09,
++  "best_dev_em": 87.29,
++  "best_train_wer": 0.99,
++  "best_train_em": 92.0,
++  "total_loops": 13,
++  "accepted_loops": 6,
+   "rejected_loops": 7,
+   "history": [
+     {
+@@ -297,6 +297,30 @@
+         "delta_dev_em": -0.3300000000000125,
+         "delta_train_wer": -0.020000000000000018
+       }
++    },
++    {
++      "loop": 12,
++      "hypothesis": "Linear peak amplitude normalization to 0.95 combined with conversational vocative prompt de-biasing",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-0.03%) or EM improved (+0.33%) without train collapse",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.88,
++        "sentence_em": 92.0,
++        "latency": 0.4772
++      },
++      "dev": {
++        "wer": 1.57,
++        "cer": 1.09,
++        "sentence_em": 87.29,
++        "latency": 0.4533
++      },
++      "deltas": {
++        "delta_dev_wer": -0.030000000000000027,
++        "delta_dev_cer": 0.010000000000000009,
++        "delta_dev_em": 0.3300000000000125,
++        "delta_train_wer": -0.1499999999999999
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 45d94ad..78402e2 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -12,9 +12,11 @@ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
+ DEFAULT_WHISPER_PROMPT = (
+-    "Trợ lý ảo tiếng Việt LifeMate điều khiển thiết bị thông minh, điều hoà 26 độ, đèn 30 phần trăm, "
+-    "chuyển khoản ngân hàng, ví điện tử, đặt xe, liên lạc Zalo, SMS, gọi điện, tra cứu thời tiết, nhắc nhở lịch hẹn. "
+-    "Dạ, vâng, trợ lý ơi, em ơi, anh ơi, chị ơi."
++    "Trợ lý ơi, nếu có thông báo thì nhắc tôi nhé. "
++    "Bật đèn 30 phần trăm, điều hoà 26 độ, tra cứu giá vàng SJC, giá xăng hôm nay. "
++    "Chuyển khoản ngân hàng, ví điện tử, thanh toán hoá đơn, rút tiết kiệm. "
++    "Đặt xe bốn chỗ, đặt báo thức, gọi điện Zalo, gửi tin nhắn giúp tôi nha. "
++    "Dạ, vâng, em ơi, anh ơi, chị ơi."
+ )
+ 
+ 

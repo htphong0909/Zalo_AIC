@@ -1,0 +1,24 @@
+{
+  "loop": 1,
+  "hypothesis": "LoRA SFT (r=16, alpha=32) on duclvQ/qwen3-asr-1.7b-vimd-full with LifeMate train audio (4042 clips)",
+  "decision": "ACCEPTED",
+  "reason": "Dev WER improved (-16.37%) or EM improved (+22.74%) without train collapse",
+  "train": {
+    "wer": 5.79,
+    "cer": 4.9,
+    "sentence_em": 44.67,
+    "latency": 0.3311
+  },
+  "dev": {
+    "wer": 12.42,
+    "cer": 8.99,
+    "sentence_em": 24.75,
+    "latency": 0.3299
+  },
+  "deltas": {
+    "delta_dev_wer": -16.369999999999997,
+    "delta_dev_cer": -11.430000000000001,
+    "delta_dev_em": 22.740000000000002,
+    "delta_train_wer": -25.44
+  }
+}

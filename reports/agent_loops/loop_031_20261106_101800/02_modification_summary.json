@@ -1,0 +1,10 @@
+{
+  "loop": 31,
+  "timestamp": "2026-11-06T10:25:17.884763",
+  "optimization_summary": "Solid compound loanword fusion and ride-hailing numeral collocation standardization in ITN",
+  "diff_stat": "src/asr/itn.py | 41 +++++++++++++++++++++++++++++++++++++++++\n 1 file changed, 41 insertions(+)",
+  "pytest_passed": true,
+  "pytest_summary": "69/69 passed",
+  "audit_passed": true,
+  "audit_notes": "Clean rule-based ITN compound fusion and vehicle collocation, zero dev leak, size budget ok"
+}

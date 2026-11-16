@@ -1,0 +1,24 @@
+{
+  "loop": 30,
+  "hypothesis": "Extending traditional diacritic harmonization to open syllables ('khóa' -> 'khoá', 'tòa' -> 'toà') aligns orthography with LifeMate ground truth conventions",
+  "decision": "REJECTED",
+  "reason": "Dev did not improve (delta WER=+0.11%, delta EM=-1.34%) or Train regressed",
+  "train": {
+    "wer": 0.99,
+    "cer": 0.86,
+    "sentence_em": 92.0,
+    "latency": 0.3729
+  },
+  "dev": {
+    "wer": 1.63,
+    "cer": 1.15,
+    "sentence_em": 85.95,
+    "latency": 0.3535
+  },
+  "deltas": {
+    "delta_dev_wer": 0.10999999999999988,
+    "delta_dev_cer": 0.06999999999999984,
+    "delta_dev_em": -1.3400000000000034,
+    "delta_train_wer": 0.0
+  }
+}

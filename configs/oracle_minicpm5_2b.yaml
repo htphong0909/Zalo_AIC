@@ -1,0 +1,27 @@
+name: oracle_minicpm5_2b
+seed: 42
+
+llm:
+  backend: vllm
+  model_id: openbmb/MiniCPM5-2B
+  adapter_path: null
+  max_model_len: 16384
+  max_new_tokens: 768
+  enable_thinking: true
+  dtype: bfloat16
+  repetition_penalty: 1.0
+  gpu_memory_utilization: 0.85
+
+agent:
+  prompt_style: v1
+  tool_selector: installed_apps
+  max_steps: 10
+  max_repairs: 2
+  timeout_s: 25.0
+  max_prompt_tokens: 15000
+  max_result_chars: 1500
+  guardrails:
+    enable_xref_guard: true
+    enable_arg_sanitizer: true
+    enable_ask_guard: true
+    enable_boundary_verifier: true

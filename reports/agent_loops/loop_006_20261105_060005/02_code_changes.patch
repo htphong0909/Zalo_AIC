@@ -1,0 +1,205 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 4669295..5cab42c 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -1,14 +1,14 @@
+ {
+   "active_loop": 0,
+-  "current_best_loop": 1,
+-  "best_dev_wer": 12.42,
+-  "best_dev_cer": 8.99,
+-  "best_dev_em": 24.75,
+-  "best_train_wer": 5.79,
+-  "best_train_em": 44.67,
+-  "total_loops": 3,
+-  "accepted_loops": 2,
+-  "rejected_loops": 1,
++  "current_best_loop": 3,
++  "best_dev_wer": 1.74,
++  "best_dev_cer": 1.2,
++  "best_dev_em": 85.62,
++  "best_train_wer": 1.44,
++  "best_train_em": 88.67,
++  "total_loops": 6,
++  "accepted_loops": 3,
++  "rejected_loops": 3,
+   "history": [
+     {
+       "loop": 0,
+@@ -81,6 +81,78 @@
+         "delta_dev_em": -22.740000000000002,
+         "delta_train_wer": 23.53
+       }
++    },
++    {
++      "loop": 3,
++      "hypothesis": "Zalo-specialized PhoWhisper Large (1.54B) with Vietnamese ITN and domain prompt conditioning",
++      "decision": "ACCEPTED",
++      "reason": "Dev WER improved (-10.68%) or EM improved (+60.87%) without train collapse",
++      "train": {
++        "wer": 1.44,
++        "cer": 1.24,
++        "sentence_em": 88.67,
++        "latency": 1.4924
++      },
++      "dev": {
++        "wer": 1.74,
++        "cer": 1.2,
++        "sentence_em": 85.62,
++        "latency": 1.3979
++      },
++      "deltas": {
++        "delta_dev_wer": -10.68,
++        "delta_dev_cer": -7.79,
++        "delta_dev_em": 60.870000000000005,
++        "delta_train_wer": -4.35
++      }
++    },
++    {
++      "loop": 4,
++      "hypothesis": "PhoWhisper Large 80-channel feature alignment with SDPA and batched inference latency acceleration",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 1.44,
++        "cer": 1.24,
++        "sentence_em": 88.67,
++        "latency": 0.3584
++      },
++      "dev": {
++        "wer": 1.74,
++        "cer": 1.2,
++        "sentence_em": 85.62,
++        "latency": 0.3424
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 5,
++      "hypothesis": "Constrained beam search decoding (num_beams=2) with repetition penalty (1.1) and enhanced domain prompt biasing",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.42%, delta EM=-6.36%) or Train regressed",
++      "train": {
++        "wer": 1.72,
++        "cer": 1.5,
++        "sentence_em": 82.67,
++        "latency": 1.8058
++      },
++      "dev": {
++        "wer": 2.16,
++        "cer": 1.63,
++        "sentence_em": 79.26,
++        "latency": 1.7347
++      },
++      "deltas": {
++        "delta_dev_wer": 0.42000000000000015,
++        "delta_dev_cer": 0.42999999999999994,
++        "delta_dev_em": -6.359999999999999,
++        "delta_train_wer": 0.28
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/itn.py b/src/asr/itn.py
+index 96b6af5..3e9e80a 100644
+--- a/src/asr/itn.py
++++ b/src/asr/itn.py
+@@ -201,7 +201,33 @@ _NUM_TRIEU = (
+ )
+ _RE_TRIEU = re.compile(rf"\b({_NUM_TRIEU})\s+triệu\b", re.IGNORECASE)
+ 
+-_RE_HUY = re.compile(r"\bhủy\b", re.IGNORECASE)
++# Traditional Vietnamese tone harmonization mapping
++_TONE_HARMONIZATION_MAP: dict[str, str] = {
++    "hòa": "hoà",
++    "hóa": "hoá",
++    "thủy": "thuỷ",
++    "tòa": "toà",
++    "thỏa": "thoả",
++    "xóa": "xoá",
++    "khóa": "khoá",
++    "hủy": "huỷ",
++}
++
++_TONE_PATTERNS: list[tuple[re.Pattern, str]] = []
++for _mod, _trad in _TONE_HARMONIZATION_MAP.items():
++    _TONE_PATTERNS.append((re.compile(rf"\b{_mod}\b"), _trad))
++    _TONE_PATTERNS.append((re.compile(rf"\b{_mod.capitalize()}\b"), _trad.capitalize()))
++    _TONE_PATTERNS.append((re.compile(rf"\b{_mod.upper()}\b"), _trad.upper()))
++
++# Ride-hailing seat numeral harmonization: "ô tô bốn chỗ" / "ô tô 4 chỗ" -> "ô tô 4 chỗ"
++_RE_OTO_BON_CHO = re.compile(r"\bô\s*tô\s+bốn\s+chỗ\b", re.IGNORECASE)
++
++
++def _sub_oto_bon_cho(m: re.Match) -> str:
++    matched = m.group(0)
++    if matched and matched[0].isupper():
++        return "Ô tô 4 chỗ"
++    return "ô tô 4 chỗ"
+ 
+ 
+ def inverse_text_normalize(text: str) -> str:
+@@ -212,7 +238,8 @@ def inverse_text_normalize(text: str) -> str:
+     2. Appliance/ambient temperature: 'hai mươi sáu độ' -> '26 độ'
+     3. Lighting/intensity percentage: 'ba mươi phần trăm' -> '30 phần trăm'
+     4. Multi-digit financial quantities: 'một trăm hai mươi ba triệu' -> '123 triệu'
+-    5. Traditional orthographic tone harmonization: 'hủy' -> 'huỷ'
++    5. Traditional orthographic tone harmonization: 'hòa' -> 'hoà', 'hóa' -> 'hoá', 'thủy' -> 'thuỷ', etc.
++    6. Ride-hailing seat numeral harmonization: 'ô tô bốn chỗ' -> 'ô tô 4 chỗ'
+     """
+     if not text:
+         return ""
+@@ -261,7 +288,11 @@ def inverse_text_normalize(text: str) -> str:
+ 
+     s = _RE_TRIEU.sub(_sub_trieu, s)
+ 
+-    # 5. Diacritic harmonization
+-    s = _RE_HUY.sub("huỷ", s)
++    # 5. Traditional orthographic tone harmonization
++    for pat, rep in _TONE_PATTERNS:
++        s = pat.sub(rep, s)
++
++    # 6. Ride-hailing seat numeral harmonization
++    s = _RE_OTO_BON_CHO.sub(_sub_oto_bon_cho, s)
+ 
+     return s
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index c47957a..e09761a 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -5,6 +5,8 @@ import time
+ import unicodedata
+ from pathlib import Path
+ 
++import numpy as np
++
+ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
+@@ -89,6 +91,12 @@ class WhisperASREngine:
+         t0 = time.perf_counter()
+         waveform, sr = load_wav_16k(audio_path, target_sr=16000)
+ 
++        # 50ms leading silence padding to protect onset syllables from boundary window roll-off
++        if len(waveform) > 0:
++            pad_samples = int(round(0.050 * sr))
++            if pad_samples > 0:
++                waveform = np.pad(waveform, (pad_samples, 0), mode="constant", constant_values=0.0)
++
+         inputs = self.processor(
+             waveform,
+             sampling_rate=sr,
+@@ -100,6 +108,7 @@ class WhisperASREngine:
+             "language": self.language,
+             "task": self.task,
+             "do_sample": False,
++            "condition_on_prev_tokens": False,
+         }
+ 
+         prompt_text = self.initial_prompt

@@ -1,0 +1,298 @@
+diff --git a/configs/agent_loop_state.json b/configs/agent_loop_state.json
+index 2787361..1f033a2 100644
+--- a/configs/agent_loop_state.json
++++ b/configs/agent_loop_state.json
+@@ -6,9 +6,9 @@
+   "best_dev_em": 87.63,
+   "best_train_wer": 0.99,
+   "best_train_em": 92.0,
+-  "total_loops": 33,
++  "total_loops": 38,
+   "accepted_loops": 10,
+-  "rejected_loops": 23,
++  "rejected_loops": 28,
+   "history": [
+     {
+       "loop": 0,
+@@ -801,6 +801,126 @@
+         "delta_dev_em": 0.3399999999999892,
+         "delta_train_wer": 0.0
+       }
++    },
++    {
++      "loop": 33,
++      "hypothesis": "Dynamic Sequence Alignment CTC anchor verification (PYG-ASR SOTA) with automatic ChunkFormer anchor initialization",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.3647
++      },
++      "dev": {
++        "wer": 1.51,
++        "cer": 1.07,
++        "sentence_em": 87.63,
++        "latency": 0.3531
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 33,
++      "hypothesis": "Dynamic Sequence Alignment CTC anchor verification (PYG-ASR SOTA) with automatic ChunkFormer anchor initialization",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.37
++      },
++      "dev": {
++        "wer": 1.51,
++        "cer": 1.07,
++        "sentence_em": 87.63,
++        "latency": 0.3513
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 34,
++      "hypothesis": "Generic Levenshtein phonetic-bounded alignment and flanked single-syllable recovery with strict entity immunity (PY-GEC ICASSP 2025)",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+6.88%, delta EM=-65.56%) or Train regressed",
++      "train": {
++        "wer": 6.7,
++        "cer": 4.4,
++        "sentence_em": 25.33,
++        "latency": 0.3701
++      },
++      "dev": {
++        "wer": 8.39,
++        "cer": 5.24,
++        "sentence_em": 22.07,
++        "latency": 0.3527
++      },
++      "deltas": {
++        "delta_dev_wer": 6.880000000000001,
++        "delta_dev_cer": 4.17,
++        "delta_dev_em": -65.56,
++        "delta_train_wer": 5.71
++      }
++    },
++    {
++      "loop": 35,
++      "hypothesis": "Audio-Tower Latent Adaptation via Contrastive Activation Steering on acoustic encoder representations (Sun et al. 2026)",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.365
++      },
++      "dev": {
++        "wer": 1.51,
++        "cer": 1.07,
++        "sentence_em": 87.63,
++        "latency": 0.3562
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
++    },
++    {
++      "loop": 36,
++      "hypothesis": "Audio-Tower-Only LoRA adaptation (CLAnSR ICASSP 2025) restricting PEFT to acoustic encoder projections with 100% frozen decoder",
++      "decision": "REJECTED",
++      "reason": "Dev did not improve (delta WER=+0.00%, delta EM=+0.00%) or Train regressed",
++      "train": {
++        "wer": 0.99,
++        "cer": 0.86,
++        "sentence_em": 92.0,
++        "latency": 0.3671
++      },
++      "dev": {
++        "wer": 1.51,
++        "cer": 1.07,
++        "sentence_em": 87.63,
++        "latency": 0.35
++      },
++      "deltas": {
++        "delta_dev_wer": 0.0,
++        "delta_dev_cer": 0.0,
++        "delta_dev_em": 0.0,
++        "delta_train_wer": 0.0
++      }
+     }
+   ]
+ }
+\ No newline at end of file
+diff --git a/src/asr/whisper_engine.py b/src/asr/whisper_engine.py
+index 841bdb0..e3a17d6 100644
+--- a/src/asr/whisper_engine.py
++++ b/src/asr/whisper_engine.py
+@@ -12,9 +12,9 @@ from src.asr.audio import load_wav_16k
+ from src.asr.base import ASRResult, strip_asr_tags
+ 
+ DEFAULT_WHISPER_PROMPT = (
+-    "Trợ lý ảo tiếng Việt LifeMate điều khiển thiết bị thông minh, điều hoà 26 độ, đèn 30 phần trăm, "
++    "Trợ lý ảo tiếng Việt LifeMate quản lý thiết bị thông minh, điều hoà 26 độ, đèn 30 phần trăm, "
+     "chuyển khoản ngân hàng, ví điện tử, đặt xe, liên lạc Zalo, SMS, gọi điện, tra cứu thời tiết, nhắc nhở lịch hẹn. "
+-    "Dạ, vâng, trợ lý ơi, em ơi, anh ơi, chị ơi."
++    "Dạ, vâng, nếu có, nếu không đủ, trợ lý ơi, em ơi, anh ơi, chị ơi."
+ )
+ 
+ 
+@@ -40,6 +40,90 @@ def _sanitize_hyp(raw_text: str, enable_itn: bool = True) -> str:
+     return clean_text
+ 
+ 
++def trim_waveform_silence(
++    waveform: np.ndarray,
++    sr: int = 16000,
++    frame_ms: float = 25.0,
++    hop_ms: float = 10.0,
++    db_threshold: float = -35.0,
++    margin_ms: float = 170.0,
++) -> np.ndarray:
++    """Conservative energy-based boundary silence trimming with safety collar.
++
++    Detects leading and trailing silence regions below db_threshold relative to peak frame RMS,
++    retaining a margin_ms buffer so low-energy consonants and offsets are never truncated.
++    """
++    if len(waveform) == 0:
++        return waveform
++
++    frame_len = int(round((frame_ms / 1000.0) * sr))
++    hop_len = int(round((hop_ms / 1000.0) * sr))
++    margin_len = int(round((margin_ms / 1000.0) * sr))
++
++    num_frames = 1 + (len(waveform) - frame_len) // hop_len
++    if num_frames <= 0:
++        return waveform
++
++    shape = (num_frames, frame_len)
++    strides = (waveform.strides[0] * hop_len, waveform.strides[0])
++    frames = np.lib.stride_tricks.as_strided(waveform, shape=shape, strides=strides)
++    rms = np.sqrt(np.mean(frames ** 2, axis=1) + 1e-12)
++
++    peak_rms = float(np.max(rms))
++    if peak_rms < 1e-5:
++        return waveform
++
++    rms_db = 20.0 * np.log10(rms / peak_rms)
++    active = np.where(rms_db > db_threshold)[0]
++    if len(active) == 0:
++        return waveform
++
++    start_idx = max(0, active[0] * hop_len - margin_len)
++    end_idx = min(len(waveform), (active[-1] * hop_len + frame_len) + margin_len)
++    return waveform[start_idx:end_idx]
++
++
++def preprocess_waveform(
++    waveform: np.ndarray,
++    sr: int = 16000,
++    pre_roll_pad_ms: float = 60.0,
++    post_roll_pad_ms: float = 60.0,
++    peak_normalize: bool = True,
++    trim_silence: bool = True,
++    vad_db_threshold: float = -35.0,
++    vad_margin_ms: float = 170.0,
++) -> np.ndarray:
++    """Acoustic waveform preprocessing aligned with inference and training pipelines.
++
++    Applies conservative silence trimming, peak amplitude normalization, and symmetric collar padding.
++    """
++    if len(waveform) == 0:
++        return waveform
++
++    # 1. Conservative energy-based silence trimming before peak normalization
++    if trim_silence:
++        waveform = trim_waveform_silence(
++            waveform,
++            sr=sr,
++            db_threshold=vad_db_threshold,
++            margin_ms=vad_margin_ms,
++        )
++
++    # 2. Peak amplitude normalization to 0.95 to optimize Mel filterbank dynamic headroom
++    if peak_normalize:
++        peak = float(np.max(np.abs(waveform)))
++        if peak > 1e-4:
++            waveform = waveform * (0.95 / peak)
++
++    # 3. Symmetric bilateral collar padding
++    if pre_roll_pad_ms > 0 or post_roll_pad_ms > 0:
++        pad_pre = int(round((pre_roll_pad_ms / 1000.0) * sr)) if pre_roll_pad_ms > 0 else 0
++        pad_post = int(round((post_roll_pad_ms / 1000.0) * sr)) if post_roll_pad_ms > 0 else 0
++        if pad_pre > 0 or pad_post > 0:
++            waveform = np.pad(waveform, (pad_pre, pad_post), mode="constant", constant_values=0.0)
++    return waveform
++
++
+ class WhisperASREngine:
+     """Deterministic Whisper ASR engine (greedy decoding, Vietnamese forced language, pre-roll padded)."""
+ 
+@@ -47,6 +131,7 @@ class WhisperASREngine:
+         self,
+         model_id: str = "kzap201/phowhisper-large-zaloai",
+         *,
++        adapter_id: str | Path | None = None,
+         device: str = "cuda",
+         dtype: str = "float16",
+         language: str = "vi",
+@@ -71,6 +156,7 @@ class WhisperASREngine:
+             torch_dtype = torch.float32
+ 
+         self.model_id = model_id
++        self.adapter_id = str(adapter_id) if adapter_id is not None else None
+         self.device = device
+         self.torch_dtype = torch_dtype
+         self.language = language
+@@ -133,6 +219,30 @@ class WhisperASREngine:
+                 ).to(device)
+ 
+         self.model.eval()
++        if self.adapter_id:
++            self.load_adapter(self.adapter_id)
++
++    def load_adapter(self, adapter_id: str | Path) -> None:
++        """Loads and merges a PEFT LoRA adapter into the base Whisper model."""
++        self.adapter_id = str(adapter_id)
++        if not hasattr(self, "model") or self.model is None:
++            return
++
++        try:
++            from peft import PeftModel
++
++            peft_model = PeftModel.from_pretrained(self.model, self.adapter_id)
++            if hasattr(peft_model, "merge_and_unload"):
++                self.model = peft_model.merge_and_unload()
++            else:
++                self.model = peft_model
++            self.model.eval()
++        except Exception as exc:
++            # Handle mock models gracefully during unit tests / zero-compute
++            if "Mock" in type(self.model).__name__ or getattr(self.model, "_is_mock", False):
++                pass
++            else:
++                raise exc
+ 
+     def _trim_waveform_silence(
+         self,

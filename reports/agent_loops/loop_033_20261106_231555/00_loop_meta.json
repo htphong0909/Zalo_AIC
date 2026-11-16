@@ -1,0 +1,8 @@
+{
+  "loop": 33,
+  "hypothesis": "Zero-shot ChunkFormer CTC acoustic anchor evaluation on Train Glass-Box for hybrid phoneme-guided verification",
+  "start_time": "2026-11-06T23:15:55.662320",
+  "status": "RUNNING",
+  "current_phase": "1_diagnosis",
+  "agent": "loop-researcher"
+}

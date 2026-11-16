@@ -1,0 +1,10 @@
+{
+  "loop": 30,
+  "timestamp": "2026-11-06T10:06:57.278747",
+  "optimization_summary": "Integrated adapter_path support in engine/evaluators and extended traditional tone harmonization ('khóa' -> 'khoá', 'tòa' -> 'toà')",
+  "diff_stat": "src/asr/itn.py                  |   2 +\n src/asr/whisper_engine.py       | 165 ++++++++++++++++++++++++++--------------\n src/eval/blind_dev_evaluator.py |   3 +-\n src/eval/train_asr_evaluator.py |   3 +-\n 4 files changed, 113 insertions(+), 60 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "68/68 passed",
+  "audit_passed": true,
+  "audit_notes": "Clean adapter infrastructure and systematic tone harmonization, zero dev leakage, size budget ok"
+}

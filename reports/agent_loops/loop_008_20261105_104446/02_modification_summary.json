@@ -1,0 +1,10 @@
+{
+  "loop": 8,
+  "timestamp": "2026-11-05T11:32:49.634691",
+  "optimization_summary": "Enhanced LifeMate domain entity prompt conditioning with selective tone conflict de-biasing and safe Whisper max_new_tokens dynamic cap",
+  "diff_stat": "configs/agent_loop_state.json | 40 ++++++++++++++++++++++++++++++++--------\n src/asr/itn.py                |  1 -\n src/asr/whisper_engine.py     | 12 +++++++++---\n 3 files changed, 41 insertions(+), 12 deletions(-)",
+  "pytest_passed": true,
+  "pytest_summary": "73 passed in 27.51s",
+  "audit_passed": true,
+  "audit_notes": "Clean architectural refactoring; strictly non-destructive"
+}
