@@ -1,10 +1,10 @@
 # Core runtime matching Qwen3.5-4B SFT V2 + PhoWhisper-Large-ZaloAI on CUDA 13.2
-torch==2.14.0
-torchaudio==2.11.0
-torchvision==0.29.0
-vllm==0.33.0
-xgrammar==0.2.8
-transformers==5.20.2
+torch>=2.14.0
+torchaudio>=2.11.0
+torchvision>=0.29.0
+vllm>=0.33.0
+xgrammar>=0.2.8
+transformers>=5.20.2
 tokenizers>=0.23.1,<0.24.0
 huggingface-hub>=1.31.0,<3.0
 safetensors>=0.8.0

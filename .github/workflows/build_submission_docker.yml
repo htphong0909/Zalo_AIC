@@ -56,8 +56,9 @@ jobs:
 
       - name: Build Docker Image zac2026:67cat
         run: |
+          set -euo pipefail
           cd submission/qwen35_4b_sft_v2_e2e
-          docker build --progress=plain --network=host -t zac2026:67cat . 2>&1 | tee /tmp/docker_build.log
+          docker build --progress=plain --network=host -t zac2026:67cat .
           echo "=== Docker Images ==="
           docker images
 
@@ -66,8 +67,6 @@ jobs:
         run: |
           echo "=== Disk space on failure ==="
           df -h
-          echo "=== Last 150 lines of Docker build log ==="
-          tail -n 150 /tmp/docker_build.log || true
 
       - name: Free Temporary Host Model Cache Before Compression
         run: |
@@ -78,8 +77,15 @@ jobs:
 
       - name: Save & Compress Docker Image (pigz parallel)
         run: |
+          set -euo pipefail
           echo "Exporting zac2026:67cat to zac2026_67Cat.tar.gz ..."
           docker save zac2026:67cat | pigz -p 4 > zac2026_67Cat.tar.gz
+          SIZE=$(stat -c%s zac2026_67Cat.tar.gz)
+          echo "Compressed tarball size: ${SIZE} bytes"
+          if [ "${SIZE}" -lt 1000000000 ]; then
+            echo "ERROR: Exported tarball is suspiciously small (< 1 GB)!"
+            exit 1
+          fi
           ls -lh zac2026_67Cat.tar.gz
 
       - name: Prune Docker Image From Daemon
@@ -107,12 +113,13 @@ jobs:
         with:
           tag_name: v1.0.0-submission
           name: ZAC 2026 Final Submission (Team 67Cat)
+          overwrite: true
           body: |
             ### Zalo AI Challenge 2026 — Final Submission Package
             - **Team Name:** `67Cat`
             - **Archive Name:** `zac2026_67Cat.tar.gz`
             - **MD5 Checksum:** See `zac2026_67Cat.tar.gz.md5`
-            - **Base Image:** `nvidia/cuda:13.2.0-devel-ubuntu22.04`
+            - **Base Image:** `nvidia/cuda:13.2.0-cudnn-devel-ubuntu24.04`
             - **Models:**
               - LLM: `Qwen/Qwen3.5-4B` SFT V2 Merged (`4.2058B` params)
               - ASR: `kzap201/phowhisper-large-zaloai` (`0.7446B` params)
