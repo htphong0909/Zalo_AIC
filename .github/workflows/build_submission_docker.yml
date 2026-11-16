@@ -108,27 +108,36 @@ jobs:
           echo "=== Release Assets Ready for Upload ==="
           ls -lh release_assets/
 
-      - name: Create GitHub Release & Upload Assets
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.0-submission
-          name: ZAC 2026 Final Submission (Team 67Cat)
-          overwrite: true
-          body: |
-            ### Zalo AI Challenge 2026 — Final Submission Package
-            - **Team Name:** `67Cat`
-            - **Archive Name:** `zac2026_67Cat.tar.gz`
-            - **MD5 Checksum:** See `zac2026_67Cat.tar.gz.md5`
-            - **Base Image:** `nvidia/cuda:13.2.0-cudnn-devel-ubuntu24.04`
-            - **Models:**
-              - LLM: `Qwen/Qwen3.5-4B` SFT V2 Merged (`4.2058B` params)
-              - ASR: `kzap201/phowhisper-large-zaloai` (`0.7446B` params)
-              - Total System: `4.95B` params (< 6.0B limit)
-            - **Reassembly Command:**
-              ```bash
-              cat zac2026_67Cat.tar.gz.part_* > zac2026_67Cat.tar.gz
-              md5sum -c zac2026_67Cat.tar.gz.md5
-              ```
-          files: release_assets/*
+      - name: Create GitHub Release & Upload Assets Sequentially (Memory-Safe)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "Creating GitHub Release v1.0.0-submission ..."
+          gh release create v1.0.0-submission release_assets/zac2026_67Cat.tar.gz.md5 \
+            --title "ZAC 2026 Final Submission (Team 67Cat)" \
+            --notes "### Zalo AI Challenge 2026 — Final Submission Package
+          - **Team Name:** \`67Cat\`
+          - **Archive Name:** \`zac2026_67Cat.tar.gz\`
+          - **MD5 Checksum:** See \`zac2026_67Cat.tar.gz.md5\`
+          - **Base Image:** \`nvidia/cuda:13.2.0-cudnn-devel-ubuntu24.04\`
+          - **Models:**
+            - LLM: \`Qwen/Qwen3.5-4B\` SFT V2 Merged (\`4.2058B\` params)
+            - ASR: \`kzap201/phowhisper-large-zaloai\` (\`0.7446B\` params)
+            - Total System: \`4.95B\` params (< 6.0B limit)
+          - **Reassembly Command:**
+            \`\`\`bash
+            cat zac2026_67Cat.tar.gz.part_* > zac2026_67Cat.tar.gz
+            md5sum -c zac2026_67Cat.tar.gz.md5
+            \`\`\`"
+
+          for f in release_assets/zac2026_67Cat.tar.gz.part_*; do
+            echo "Uploading $f to GitHub Release v1.0.0-submission ..."
+            gh release upload v1.0.0-submission "$f" --clobber
+            echo "Uploaded $f successfully, freeing disk..."
+            rm -f "$f"
+          done
+          echo "=== All release parts uploaded and verified ==="
+          gh release view v1.0.0-submission
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
